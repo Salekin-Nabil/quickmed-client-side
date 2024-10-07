@@ -1,0 +1,7 @@
+.gradient_background {
+    background: linear-gradient(160deg, #c9f1dd, #013017 95%);
+  }
+
+.gradient_neutral{
+  background: linear-gradient(160deg, #e5eae8, #404454 90%);
+}
