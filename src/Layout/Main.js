@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Footer from '../Pages/Shared/Footer/Footer';
 import Navbar from '../Pages/Shared/Navbar/Navbar';
 import ScrollTop from '../Pages/Shared/Navbar/ScrollTop';
-import Whatsapp from '../Pages/Shared/Navbar/Whatsapp';
+import ChatBot from '../Pages/Shared/Navbar/ChatBot';
 
 const Main = () => {
     return (
@@ -13,7 +13,7 @@ const Main = () => {
             <Footer></Footer>
             <div className='flex justify-between'>
                 <ScrollTop></ScrollTop>
-                <Whatsapp></Whatsapp>
+                <ChatBot></ChatBot>
             </div>
         </div>
     );

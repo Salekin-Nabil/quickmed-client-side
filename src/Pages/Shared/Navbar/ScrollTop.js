@@ -38,13 +38,13 @@ const ScrollTop= () => {
             onClick={backToTop}
             className={` ${
               showButton ? `inline-block` : `hidden`
-            } fixed bottom-[40px] right-[100px] p-3 bg-cyan-200 text-white font-medium text-xs leading-tight uppercase rounded-full shadow-md hover:bg-cyan-400 hover:shadow-lg focus:bg-cyan-500 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-cyan-600 active:shadow-lg transition duration-150 ease-in-out`}
+            } fixed bottom-[40px] right-[140px] p-3 bg-[#78cec0] text-white font-medium text-xs leading-tight uppercase rounded-full shadow-md hover:bg-[#44794b] hover:shadow-lg focus:bg-cyan-500 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-cyan-600 active:shadow-lg transition duration-150 ease-in-out`}
           >
             <svg
               aria-hidden="true"
               focusable="false"
               data-prefix="fas"
-              className="w-5 h-5"
+              className="w-[60px] h-[60px]"
               role="img"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 448 512"

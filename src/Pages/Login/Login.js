@@ -54,12 +54,16 @@ const Login = () => {
 
     let from = location.state?.from?.pathname || "/";
     
-    useEffect(()=>{
-        if (token) {
-            navigate(from, { replace: true });
-        }
-    },[token,from,navigate]);
+    // useEffect(()=>{
+    //     if (token) {
+    //         navigate(from, { replace: true });
+    //     }
+    // },[token,from,navigate]);
 
+    if (user || user1 || user2) {
+             navigate(from, { replace: true });
+         }
+    
     let errorElement;
 
     if(loading || loading1 || loading2){
