@@ -14,66 +14,89 @@ import MyHistory from "../../Pages/Dashboard/MyHistory/MyHistory";
 import AllUsers from "../../Pages/Dashboard/AllUsers/AllUsers";
 import RequireAdmin from "../../Pages/Login/RequireAdmin";
 import AllBookings from "../../Pages/Dashboard/AllBookings/AllBookings";
+import VideoCall from "../../Pages/VideoCall/VideoCall";
 
 const router = createBrowserRouter([
-    {
-        path: '/',
-        element: <Main></Main>, 
+  {
+    path: "/",
+    element: <Main></Main>,
+    children: [
+      {
+        path: "/",
+        element: <Home></Home>,
+      },
+      {
+        path: "/login",
+        element: <Login></Login>,
+      },
+      {
+        path: "/signup",
+        element: <Signup></Signup>,
+      },
+      {
+        path: "/about",
+        element: <About></About>,
+      },
+      {
+        path: "/reviews",
+        element: <Reviews></Reviews>,
+      },
+      {
+        path: "/appointment",
+        element: (
+          <RequireAuth>
+            <Appointment></Appointment>
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "/call",
+        element: (
+          <RequireAuth>
+            <VideoCall></VideoCall>
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "/dashboard",
+        element: (
+          <RequireAuth>
+            <Dashboard></Dashboard>
+          </RequireAuth>
+        ),
         children: [
-            {
-                path: '/',
-                element: <Home></Home>
-            },
-            {
-                path: '/login',
-                element: <Login></Login>
-            },
-            {
-                path: '/signup',
-                element: <Signup></Signup>
-            },
-            {
-                path: '/about',
-                element: <About></About>
-            },
-            {
-                path: '/reviews',
-                element: <Reviews></Reviews>
-            },
-            {
-                path: '/appointment',
-                element: <RequireAuth><Appointment></Appointment></RequireAuth>
-            },
-            {
-                path: '/dashboard',
-                element: <RequireAuth>
-                    <Dashboard></Dashboard>
-                    </RequireAuth>,
-                children: [
-                    {
-                        path: '/dashboard',
-                        element: <MyAppointment></MyAppointment>
-                    },
-                    {
-                        path: '/dashboard/my_reviews',
-                        element: <MyReviews></MyReviews>
-                    },
-                    {
-                        path: '/dashboard/my_history',
-                        element: <MyHistory></MyHistory>
-                    },
-                    {
-                        path: '/dashboard/users',
-                        element: <RequireAdmin><AllUsers></AllUsers></RequireAdmin>
-                    },
-                    {
-                        path: '/dashboard/all_bookings',
-                        element: <RequireAdmin><AllBookings></AllBookings></RequireAdmin>
-                    },
-                ]
-            }
-        ]
-    }
-])
+          {
+            path: "/dashboard",
+            element: <MyAppointment></MyAppointment>,
+          },
+          {
+            path: "/dashboard/my_reviews",
+            element: <MyReviews></MyReviews>,
+          },
+          {
+            path: "/dashboard/my_history",
+            element: <MyHistory></MyHistory>,
+          },
+          {
+            path: "/dashboard/users",
+            element: (
+              <RequireAdmin>
+                <AllUsers></AllUsers>
+              </RequireAdmin>
+            ),
+          },
+          {
+            path: "/dashboard/all_bookings",
+            element: (
+              <RequireAdmin>
+                <AllBookings></AllBookings>
+              </RequireAdmin>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+]);
 
 export default router;
