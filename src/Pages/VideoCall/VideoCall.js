@@ -8,15 +8,20 @@ const VideoCall = () => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnection = useRef(null);
-  const connectionId = user.uid;
-  const [sessionId] = useState("shared-session-id");
+  const connectionId = user.uid; // Unique client ID
+  const [sessionId] = useState("shared-session-id"); // Shared session ID
 
   useEffect(() => {
+    // Create a new RTCPeerConnection
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        // Add TURN servers if needed
+      ],
     });
     peerConnection.current = pc;
 
+    // Get local media stream and add it to the peer connection
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
@@ -27,6 +32,7 @@ const VideoCall = () => {
       })
       .catch((err) => console.error("Failed to get local media", err));
 
+    // Send ICE candidates to the server
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         axios
@@ -40,12 +46,14 @@ const VideoCall = () => {
       }
     };
 
+    // Set remote video stream when received
     pc.ontrack = (event) => {
       if (remoteVideoRef.current.srcObject !== event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
 
+    // Handle ICE connection state changes
     pc.oniceconnectionstatechange = () => {
       console.log("ICE Connection State:", pc.iceConnectionState);
     };
@@ -59,6 +67,7 @@ const VideoCall = () => {
     };
   }, [connectionId, sessionId]);
 
+  // Function to get ICE candidates from the server
   const getCandidates = async () => {
     try {
       const response = await axios.post("http://localhost:8080/signal", {
@@ -75,21 +84,23 @@ const VideoCall = () => {
     }
   };
 
+  // Function to continuously poll for ICE candidates
   const pollCandidates = () => {
-    if (
-      peerConnection.current.iceConnectionState !== "connected" &&
-      peerConnection.current.iceConnectionState !== "completed"
-    ) {
-      getCandidates();
-      setTimeout(pollCandidates, 1000);
-    }
+    getCandidates();
+    // Continue polling every second regardless of ICE connection state
+    setTimeout(pollCandidates, 1000);
   };
 
   const handleCall = async () => {
     try {
+      // Create an offer and set local description
       const offer = await peerConnection.current.createOffer();
       await peerConnection.current.setLocalDescription(offer);
 
+      // Start polling for ICE candidates immediately after setting local description
+      pollCandidates();
+
+      // Send the offer to the server
       await axios.post("http://localhost:8080/signal", {
         sdp: offer.sdp,
         type: "offer",
@@ -97,6 +108,7 @@ const VideoCall = () => {
         sessionId: sessionId,
       });
 
+      // Poll for the answer from the server
       const pollAnswer = async () => {
         try {
           const response = await axios.post("http://localhost:8080/signal", {
@@ -106,15 +118,15 @@ const VideoCall = () => {
           });
 
           if (response.data.sdp) {
+            // Set remote description with the answer
             await peerConnection.current.setRemoteDescription(
               new RTCSessionDescription({
                 type: "answer",
                 sdp: response.data.sdp,
               })
             );
-
-            pollCandidates();
           } else {
+            // Retry after 1 second if no answer is received yet
             setTimeout(pollAnswer, 1000);
           }
         } catch (err) {
@@ -130,6 +142,7 @@ const VideoCall = () => {
 
   const handleAnswer = async () => {
     try {
+      // Get the offer from the server
       const response = await axios.post("http://localhost:8080/signal", {
         type: "get-offer",
         sessionId: sessionId,
@@ -137,21 +150,25 @@ const VideoCall = () => {
       });
 
       if (response.data.sdp) {
+        // Set remote description with the offer
         await peerConnection.current.setRemoteDescription(
           new RTCSessionDescription({ type: "offer", sdp: response.data.sdp })
         );
 
+        // Create an answer and set local description
         const answer = await peerConnection.current.createAnswer();
         await peerConnection.current.setLocalDescription(answer);
 
+        // Start polling for ICE candidates immediately after setting local description
+        pollCandidates();
+
+        // Send the answer to the server
         await axios.post("http://localhost:8080/signal", {
           sdp: answer.sdp,
           type: "answer",
           id: connectionId,
           sessionId: sessionId,
         });
-
-        pollCandidates();
       } else {
         console.error("No offer SDP received from server");
       }
