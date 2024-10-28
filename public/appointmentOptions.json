@@ -1,7 +1,6 @@
 [
     {
-      "_id": 1,
-      "name": "General Repair",
+      "name": "Dermatology",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -18,8 +17,7 @@
       ]
     },
     {
-      "_id": 2,
-      "name": "Home Improvements",
+      "name": "Psychiatry",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -36,8 +34,7 @@
       ]
     },
     {
-      "_id": 3,
-      "name": "Painting",
+      "name": "Gynecology",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -54,8 +51,7 @@
       ]
     },
     {
-      "_id": 4,
-      "name": "Plumbing",
+      "name": "Cardiology",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -72,14 +68,7 @@
       ]
     },
     {
-      "_id": 5,
-      "name": "Electrical",
-      "slots": [
-      ]
-    },
-    {
-      "_id": 6,
-      "name": "Drywall Repair",
+      "name": "Pediatrics",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -96,8 +85,7 @@
       ]
     },
     {
-      "_id": 7,
-      "name": "Appliance Installation",
+      "name": "Endocrinology",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -114,8 +102,7 @@
       ]
     },
     {
-      "_id": 8,
-      "name": "Door and Windows Repairs",
+      "name": "Neurology",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -132,14 +119,7 @@
       ]
     },
     {
-      "_id": 9,
-      "name": "Landscaping and Yard Work",
-      "slots": [
-      ]
-    },
-    {
-      "_id": 10,
-      "name": "Fence Installation and Repair",
+      "name": "Gastroenterology",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",
@@ -156,14 +136,58 @@
       ]
     },
     {
-      "_id": 11,
-      "name": "Trash Removal",
+      "name": "Rheumatology",
       "slots": [
+        "08.00 AM - 09.00 AM",
+        "09.00 AM - 10.00 AM",
+        "10.00 AM - 11.00 AM",
+        "11.00 AM - 12.00 AM",
+        "12.00 AM - 01.00 AM",
+        "01.00 PM - 02.00 PM",
+        "02.00 PM - 03.00 PM",
+        "03.00 PM - 04.00 PM",
+        "04.00 PM - 05.00 PM",
+        "05.00 PM - 06.00 PM",
+        "06.00 PM - 07.00 PM",
+        "07.00 PM - 08.00 PM"
       ]
     },
     {
-      "_id": 12,
-      "name": "Pressure Washing",
+      "name": "Ophthalmology",
+      "slots": [
+        "08.00 AM - 09.00 AM",
+        "09.00 AM - 10.00 AM",
+        "10.00 AM - 11.00 AM",
+        "11.00 AM - 12.00 AM",
+        "12.00 AM - 01.00 AM",
+        "01.00 PM - 02.00 PM",
+        "02.00 PM - 03.00 PM",
+        "03.00 PM - 04.00 PM",
+        "04.00 PM - 05.00 PM",
+        "05.00 PM - 06.00 PM",
+        "06.00 PM - 07.00 PM",
+        "07.00 PM - 08.00 PM"
+      ]
+    },
+    {
+      "name": "Urology",
+      "slots": [
+        "08.00 AM - 09.00 AM",
+        "09.00 AM - 10.00 AM",
+        "10.00 AM - 11.00 AM",
+        "11.00 AM - 12.00 AM",
+        "12.00 AM - 01.00 AM",
+        "01.00 PM - 02.00 PM",
+        "02.00 PM - 03.00 PM",
+        "03.00 PM - 04.00 PM",
+        "04.00 PM - 05.00 PM",
+        "05.00 PM - 06.00 PM",
+        "06.00 PM - 07.00 PM",
+        "07.00 PM - 08.00 PM"
+      ]
+    },
+    {
+      "name": "Orthopedics",
       "slots": [
         "08.00 AM - 09.00 AM",
         "09.00 AM - 10.00 AM",

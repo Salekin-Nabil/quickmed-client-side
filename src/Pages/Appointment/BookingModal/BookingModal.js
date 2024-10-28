@@ -31,10 +31,11 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
             slot,
             email,
             phone,
-            location
+            location,
+            status: "unpaid"
         }
 
-        fetch('http://localhost:7000/bookings', {
+        fetch('http://localhost:3000/bookings', {
             method: "POST",
             headers:{
                 "content-type": "application/json"

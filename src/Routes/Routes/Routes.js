@@ -14,6 +14,9 @@ import MyHistory from "../../Pages/Dashboard/MyHistory/MyHistory";
 import AllUsers from "../../Pages/Dashboard/AllUsers/AllUsers";
 import RequireAdmin from "../../Pages/Login/RequireAdmin";
 import AllBookings from "../../Pages/Dashboard/AllBookings/AllBookings";
+import ApplyDoctor from "../../Pages/ApplyDoctor/ApplyDoctor";
+import DoctorsApplication from "../../Pages/Dashboard/DoctorsApplication/DoctorsApplication";
+import Payment from "../../Pages/Dashboard/Checkout/Payment";
 
 const router = createBrowserRouter([
     {
@@ -70,8 +73,20 @@ const router = createBrowserRouter([
                         path: '/dashboard/all_bookings',
                         element: <RequireAdmin><AllBookings></AllBookings></RequireAdmin>
                     },
+                    {
+                        path: '/dashboard/doctors_applications',
+                        element: <RequireAdmin><DoctorsApplication></DoctorsApplication></RequireAdmin>
+                    },
+                    {
+                        path: '/dashboard/payment/:id',
+                        element: <Payment></Payment>
+                    },
                 ]
-            }
+            },
+            {
+                path: '/apply_as_a_doctor',
+                element: <RequireAuth><ApplyDoctor></ApplyDoctor></RequireAuth>
+            },
         ]
     }
 ])

@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { Helmet } from 'react-helmet';
+import { faTrashCan, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { Link } from 'react-router-dom';
 // import { AuthContext } from '../../../contexts/AuthProvider';
 
@@ -15,7 +17,7 @@ const MyAppointment = () => {
     const [user, loading, error] = useAuthState(auth);
     const navigate = useNavigate();
 
-    const url = `http://localhost:7000/bookings?email=${user?.email}`;
+    const url = `http://localhost:3000/bookings?email=${user?.email}`;
 
     useEffect(() => {
         if(user) {
@@ -39,7 +41,7 @@ const MyAppointment = () => {
     }, [user]);
 
     const handleDeleteBooking = id => {
-        fetch(`http://localhost:7000/bookings/${id}`, {
+        fetch(`http://localhost:3000/bookings/${id}`, {
             method: 'DELETE', 
             headers: {
                 authorization: `bearer ${localStorage.getItem('accessToken')}`
@@ -82,6 +84,8 @@ const MyAppointment = () => {
                             <th className='py-5'>Service</th>
                             <th className='py-5'>Date</th>
                             <th className='py-5'>Time</th>
+                            <th className='py-5'>Status</th>
+                            <th className='py-5'>Checkout</th>
                             <th className='py-5'>Action</th>
                         </tr>
                     </thead>
@@ -94,7 +98,43 @@ const MyAppointment = () => {
                                 <td className='text-center py-5'>{appointment.service}</td>
                                 <td className='text-center py-5'>{appointment.appointmentDate}</td>
                                 <td className='text-center py-5'>{appointment.slot}</td>
-                                <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel</button></td>
+                                {
+                                            appointment.status==="unpaid" && 
+                                            <td className="text-center  font-bold text-[red] px-6 py-4 whitespace-nowrap">
+                                            Unpaid
+                                        </td>
+                                        }
+                                        {
+                                            appointment.status==="pending" && 
+                                            <td className="text-center text-[goldenrod] font-bold px-6 py-4 whitespace-nowrap">
+                                            Pending
+                                        </td>
+                                        }
+                                        {
+                                            appointment.status==="completed" && 
+                                            <td className="font-bold text-center text-[green] px-6 py-4 whitespace-nowrap">
+                                            Completed
+                                        </td>
+                                        }
+                                {
+                                    appointment.status==="unpaid" ?
+                                    <td className="text-center text-white px-6 py-4 whitespace-nowrap">
+                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='rounded-full bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-12 border-0 shadow shadow-[black]'>Pay... <FontAwesomeIcon className='text-white' icon={faCreditCard}></FontAwesomeIcon></button>
+                                    </td>
+                                    :
+                                    <td className="text-lg text-white font-semibold px-6 py-4 whitespace-nowrap text-center">
+                                        <span className='rounded-full text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary font-bold py-3 px-4'>Paid:  {appointment.transactionId}</span>
+                                    </td>
+                                }
+                                {/* <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel</button></td> */}
+                                {
+                                            appointment.status==="unpaid" ?
+                                            <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel... <FontAwesomeIcon className='text-white' icon={faTrashCan}></FontAwesomeIcon></button></td>
+                                        :
+                                        <td className="text-lg text-center text-white font-semibold px-6 py-4 whitespace-nowrap">
+                                            <span className='rounded-full text-red-700 py-3 px-4'>Can't Delete</span>
+                                        </td>
+                                        }
                             </tr>)
                         }
                     </tbody>

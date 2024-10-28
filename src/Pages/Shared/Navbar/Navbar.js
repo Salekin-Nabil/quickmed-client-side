@@ -44,7 +44,7 @@ const Navbar = () => {
         }
         <li><Link className='hover:text-slate-500' to="/reviews">Reviews</Link></li>
         <li><Link className='hover:text-slate-500' to="/about">About</Link></li>
-        <li><Link className='hover:text-slate-500 text-[#78cec0]' to="/apply">Apply as A Doctor</Link></li>
+        <li><Link className='hover:text-slate-500 text-[#78cec0]' to="/apply_as_a_doctor">Apply as A Doctor</Link></li>
         <li>{user ? <div className='flex p-0'> <Link to="/login" className='btn btn-ghost font-bold text-[#cf7b7b] hover:text-white' onClick={logout_loader}>Log Out</Link> <img className='rounded-full w-[40px] h-[40px] ring ring-[#76d276]' src={user.photoURL || "https://graph.facebook.com/1840598326336872/picture"}></img> </div> : <Link to="/login" className='bg-gradient-to-br from-accent to-secondary text-white hover:text-slate-300'>Login</Link>}</li>
     </React.Fragment>
 
