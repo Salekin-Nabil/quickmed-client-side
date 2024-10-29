@@ -86,7 +86,24 @@ const VideoCall = () => {
     setPcReady(true);
 
     return () => {
-      pc.close();
+      if (localVideoRef.current && localVideoRef.current.srcObject) {
+        localVideoRef.current.srcObject
+          .getTracks()
+          .forEach((track) => track.stop());
+      }
+
+      if (peerConnection.current) {
+        peerConnection.current.close();
+        peerConnection.current = null;
+      }
+
+      axios
+        .post("http://localhost:8080/signal", {
+          type: "hangup",
+          sessionId: sessionId,
+          id: connectionId,
+        })
+        .catch((err) => console.error("Failed to send hangup signal", err));
     };
   }, [connectionId, sessionId]);
 
@@ -263,7 +280,7 @@ const VideoCall = () => {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-black">
+    <div className="relative flex items-center justify-center max-h-96 bg-black">
       <video
         ref={remoteVideoRef}
         autoPlay
