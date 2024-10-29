@@ -37,7 +37,7 @@ const ChatBot = () => {
 
   const sendMessageToBackend = async (message) => {
     try {
-      const response = await axios.post("http://localhost:8080/message", {
+      const response = await axios.post("http://localhost:3000/message", {
         message: message,
         user_id: user.uid,
       });

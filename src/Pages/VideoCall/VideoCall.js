@@ -64,7 +64,7 @@ const VideoCall = () => {
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         axios
-          .post("http://localhost:8080/signal", {
+          .post("http://localhost:3000/signal", {
             candidate: event.candidate,
             type: "candidate",
             sessionId: sessionId,
@@ -98,7 +98,7 @@ const VideoCall = () => {
       }
 
       axios
-        .post("http://localhost:8080/signal", {
+        .post("http://localhost:3000/signal", {
           type: "hangup",
           sessionId: sessionId,
           id: connectionId,
@@ -109,7 +109,7 @@ const VideoCall = () => {
 
   const getCandidates = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/signal", {
+      const response = await axios.post("http://localhost:3000/signal", {
         type: "get-candidates",
         sessionId: sessionId,
         id: connectionId,
@@ -152,7 +152,7 @@ const VideoCall = () => {
 
       pollCandidates();
 
-      await axios.post("http://localhost:8080/signal", {
+      await axios.post("http://localhost:3000/signal", {
         sdp: offer.sdp,
         type: "offer",
         id: connectionId,
@@ -161,7 +161,7 @@ const VideoCall = () => {
 
       const pollAnswer = async () => {
         try {
-          const response = await axios.post("http://localhost:8080/signal", {
+          const response = await axios.post("http://localhost:3000/signal", {
             type: "get-answer",
             sessionId: sessionId,
             id: connectionId,
@@ -194,7 +194,7 @@ const VideoCall = () => {
 
       const getOffer = async () => {
         try {
-          const response = await axios.post("http://localhost:8080/signal", {
+          const response = await axios.post("http://localhost:3000/signal", {
             type: "get-offer",
             sessionId: sessionId,
             id: connectionId,
@@ -213,7 +213,7 @@ const VideoCall = () => {
 
             pollCandidates();
 
-            await axios.post("http://localhost:8080/signal", {
+            await axios.post("http://localhost:3000/signal", {
               sdp: answer.sdp,
               type: "answer",
               id: connectionId,
@@ -268,7 +268,7 @@ const VideoCall = () => {
     }
 
     try {
-      await axios.post("http://localhost:8080/signal", {
+      await axios.post("http://localhost:3000/signal", {
         type: "hangup",
         sessionId: sessionId,
         id: connectionId,

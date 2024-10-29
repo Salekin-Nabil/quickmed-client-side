@@ -15,7 +15,7 @@ const MyAppointment = () => {
   const [user, loading, error] = useAuthState(auth);
   const navigate = useNavigate();
 
-  const url = `http://localhost:8080/bookings?email=${user?.email}`;
+  const url = `http://localhost:3000/bookings?email=${user?.email}`;
 
   useEffect(() => {
     if (user) {
@@ -40,7 +40,7 @@ const MyAppointment = () => {
   }, [user]);
 
   const handleDeleteBooking = (id) => {
-    fetch(`http://localhost:8080/bookings/${id}`, {
+    fetch(`http://localhost:3000/bookings/${id}`, {
       method: "DELETE",
       headers: {
         authorization: `bearer ${localStorage.getItem("accessToken")}`,
