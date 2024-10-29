@@ -6,19 +6,8 @@ import { useQuery } from "react-query";
 import { Helmet } from "react-helmet";
 
 const AllUsers = () => {
-  // const {data: users = [], isLoading, refetch} = useQuery({
-  //     queryKey: ['users'],
-  //     queryFn: async() =>{
-  //         const res = await fetch('http://localhost:7000/users');
-  //         if(isLoading){
-  //           return <Loading></Loading>
-  //         }
-  //         const data = await res.json();
-  //         return data;
-  //     }
-  // });
   const {
-    data: users,
+    data: users = [],
     isLoading,
     refetch,
   } = useQuery({
@@ -36,14 +25,14 @@ const AllUsers = () => {
   });
 
   if (isLoading) {
-    return <Loading></Loading>;
+    return <Loading />;
   }
 
   const handleMakeAdmin = (email) => {
     fetch(`http://localhost:3000/users/admin/${email}`, {
       method: "PUT",
       headers: {
-        authorization: `bearer ${localStorage.getItem("accessToken")}`,
+        authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
     })
       .then((res) => res.json())
@@ -59,17 +48,18 @@ const AllUsers = () => {
     fetch(`http://localhost:3000/users/${email}`, {
       method: "DELETE",
       headers: {
-        authorization: `bearer ${localStorage.getItem("accessToken")}`,
+        authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
     })
       .then((res) => res.json())
       .then((data) => {
         refetch();
       });
+
     fetch(`http://localhost:3000/bookings/admin/${email}`, {
       method: "DELETE",
       headers: {
-        authorization: `bearer ${localStorage.getItem("accessToken")}`,
+        authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
     })
       .then((res) => res.json())
@@ -82,7 +72,7 @@ const AllUsers = () => {
   return (
     <div className="mb-[60px] mx-[20px]">
       <Helmet>
-        <title>QuickMed-User Management</title>
+        <title>QuickMed - User Management</title>
       </Helmet>
       <h1 className="text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary text-5xl mb-8 font-bold shadow-lg shadow-[gray] hover:shadow-xl hover:shadow-[gray] mx-[1vw] py-[1vw] rounded-lg">
         All <span className="text-[#20242c]">Users</span>
@@ -109,13 +99,10 @@ const AllUsers = () => {
                 </th>
                 <th className="text-center py-5">{i + 1}</th>
                 <td>
-                  <div className="flex items-center space-x-3  ml-10">
+                  <div className="flex items-center space-x-3 ml-10">
                     <div className="avatar">
                       <div className="mask mask-squircle w-12 h-12">
-                        <img
-                          src={user.photo}
-                          alt="Avatar Tailwind CSS Component"
-                        />
+                        <img src={user.photo} alt="Avatar" />
                       </div>
                     </div>
                     <div>

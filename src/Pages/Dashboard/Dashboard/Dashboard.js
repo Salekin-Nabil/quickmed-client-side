@@ -43,6 +43,14 @@ const Dashboard = () => {
                   All Bookings
                 </Link>
               </li>
+              <li>
+                <Link
+                  className="font-bold"
+                  to="/dashboard/doctors_applications"
+                >
+                  Review Doctor's Applications
+                </Link>
+              </li>
               {/* <li><Link className='font-bold' to="/dashboard/manage_bookings">Manage Bookings</Link></li> */}
             </>
           )}

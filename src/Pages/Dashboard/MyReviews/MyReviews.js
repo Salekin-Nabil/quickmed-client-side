@@ -43,6 +43,22 @@ const MyReviews = () => {
         toast.success("Thanks for your valuable review.");
       });
   };
+  console.log(data);
+
+  const url = `http://localhost:3000/reviews/${email}`;
+  fetch(url, {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(data),
+  })
+    .then((res) => res.json())
+    .then((result) => {
+      console.log(result);
+      toast.success("Thanks for your valuable review.");
+    });
+
   return (
     <div>
       <Helmet>

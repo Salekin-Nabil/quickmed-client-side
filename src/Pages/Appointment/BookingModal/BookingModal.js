@@ -6,13 +6,9 @@ import auth from "../../../firebase.init";
 import emailjs from "emailjs-com";
 
 const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
-  // treatment is just another name of appointmentOptions with name, slots, _id
   const [user] = useAuthState(auth);
   const { _id, name, slots } = treatment;
   const date = format(selectedDate, "PP");
-
-  // const notify = () => toast(`Your Booking is Successfully Enlisted on ${date} at ${slot}`);
-  // const notify1 = (data) => toast(`${data}`);
 
   const handleBooking = (event) => {
     event.preventDefault();
@@ -22,16 +18,17 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
     const email = user.email;
     const phone = form.phone.value;
     const location = form.location.value;
-    // [3, 4, 5].map((value, i) => console.log(value))
+
     const booking = {
       appointmentDate: date,
       serviceId: _id,
       service: name,
-      username: username,
+      username,
       slot,
       email,
       phone,
       location,
+      status: "unpaid",
     };
 
     fetch("http://localhost:3000/bookings", {
@@ -44,21 +41,17 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
       .then((res) => res.json())
       .then((data) => {
         if (data.acknowledged) {
-          alert(`Your Booking is Successfully Enlisted on ${date} at ${slot}`);
-          // notify();
+          toast.success(
+            `Your Booking is Successfully Enlisted on ${date} at ${slot}`
+          );
         } else {
-          alert(`${data.message}`);
-          // notify1(data.message);
+          toast.error(`${data.message}`);
         }
 
         refetch();
         setTreatment(null);
         sendEmail(booking);
       });
-
-    // TODO: send data to the server
-    // and once data is saved then close the modal
-    // and display success toast
   };
 
   const sendEmail = (booking) => {
@@ -109,7 +102,7 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
               type="text"
               disabled
               value={date}
-              className="input w-full input-bordered "
+              className="input w-full input-bordered"
             />
             <select name="slot" className="select select-bordered w-full">
               {slots.map((slot, i) => (
@@ -122,13 +115,13 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
               type="text"
               disabled
               value={user.displayName}
-              className="input w-full input-bordered "
+              className="input w-full input-bordered"
             />
             <input
               type="email"
               disabled
               value={user.email}
-              className="input w-full input-bordered "
+              className="input w-full input-bordered"
             />
             <input
               name="phone"
