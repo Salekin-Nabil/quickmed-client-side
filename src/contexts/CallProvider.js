@@ -40,11 +40,11 @@ export const CallProvider = ({ children }) => {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     socket.send(JSON.stringify({ type: "call", offer, target_id: targetID }));
-    navigate("/call");
+    navigate(`/call/${user.uid}/to/${targetID}`);
   };
 
-  const acceptCall = () => {
-    navigate("/call");
+  const acceptCall = (fromId) => {
+    navigate(`/call/${fromId}/to/${user.uid}`);
   };
 
   const handleAnswer = async (answer) => {

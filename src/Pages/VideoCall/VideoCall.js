@@ -2,26 +2,51 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import auth from "../../firebase.init";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useParams, useNavigate } from "react-router-dom";
 
 const VideoCall = () => {
   const [user] = useAuthState(auth);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnection = useRef(null);
-  const connectionId = user.uid; // Unique client ID
-  const [sessionId] = useState("shared-session-id"); // Shared session ID
+  const { userId, secondUserId } = useParams();
+  const navigate = useNavigate();
+
+  const [connectionId, setConnectionId] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [pcReady, setPcReady] = useState(false);
+  const [mediaReady, setMediaReady] = useState(false);
+
+  const addedCandidates = useRef(new Set());
 
   useEffect(() => {
-    // Create a new RTCPeerConnection
+    if (user) {
+      setConnectionId(user.uid);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (userId && secondUserId) {
+      const sortedIds = [userId, secondUserId].sort();
+      const session = `${sortedIds[0]}x${sortedIds[1]}`;
+      setSessionId(session);
+    }
+  }, [userId, secondUserId]);
+
+  useEffect(() => {
+    if (!connectionId || !sessionId) return;
+
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
-        // Add TURN servers if needed
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" },
       ],
     });
     peerConnection.current = pc;
 
-    // Get local media stream and add it to the peer connection
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
@@ -29,10 +54,13 @@ const VideoCall = () => {
         stream.getTracks().forEach((track) => {
           pc.addTrack(track, stream);
         });
+        setMediaReady(true);
       })
-      .catch((err) => console.error("Failed to get local media", err));
+      .catch((err) => {
+        console.error("Failed to get local media", err);
+        alert("Не удалось получить доступ к камере и микрофону.");
+      });
 
-    // Send ICE candidates to the server
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         axios
@@ -46,28 +74,22 @@ const VideoCall = () => {
       }
     };
 
-    // Set remote video stream when received
     pc.ontrack = (event) => {
       if (remoteVideoRef.current.srcObject !== event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
 
-    // Handle ICE connection state changes
-    pc.oniceconnectionstatechange = () => {
-      console.log("ICE Connection State:", pc.iceConnectionState);
-    };
+    pc.oniceconnectionstatechange = () => {};
+    pc.onconnectionstatechange = () => {};
 
-    pc.onconnectionstatechange = () => {
-      console.log("Connection State:", pc.connectionState);
-    };
+    setPcReady(true);
 
     return () => {
       pc.close();
     };
   }, [connectionId, sessionId]);
 
-  // Function to get ICE candidates from the server
   const getCandidates = async () => {
     try {
       const response = await axios.post("http://localhost:8080/signal", {
@@ -75,32 +97,44 @@ const VideoCall = () => {
         sessionId: sessionId,
         id: connectionId,
       });
+
       const candidates = response.data.candidates;
-      for (const candidate of candidates) {
-        await peerConnection.current.addIceCandidate(candidate);
+
+      if (Array.isArray(candidates) && candidates.length > 0) {
+        for (const candidate of candidates) {
+          const candidateKey =
+            candidate.candidate +
+            "|" +
+            candidate.sdpMid +
+            "|" +
+            candidate.sdpMLineIndex;
+          if (!addedCandidates.current.has(candidateKey)) {
+            try {
+              await peerConnection.current.addIceCandidate(candidate);
+              addedCandidates.current.add(candidateKey);
+            } catch (error) {
+              console.error("Error adding ICE candidate:", error);
+            }
+          }
+        }
       }
     } catch (err) {
       console.error("Failed to get ICE candidates", err);
     }
   };
 
-  // Function to continuously poll for ICE candidates
   const pollCandidates = () => {
     getCandidates();
-    // Continue polling every second regardless of ICE connection state
     setTimeout(pollCandidates, 1000);
   };
 
   const handleCall = async () => {
     try {
-      // Create an offer and set local description
       const offer = await peerConnection.current.createOffer();
       await peerConnection.current.setLocalDescription(offer);
 
-      // Start polling for ICE candidates immediately after setting local description
       pollCandidates();
 
-      // Send the offer to the server
       await axios.post("http://localhost:8080/signal", {
         sdp: offer.sdp,
         type: "offer",
@@ -108,7 +142,6 @@ const VideoCall = () => {
         sessionId: sessionId,
       });
 
-      // Poll for the answer from the server
       const pollAnswer = async () => {
         try {
           const response = await axios.post("http://localhost:8080/signal", {
@@ -118,7 +151,6 @@ const VideoCall = () => {
           });
 
           if (response.data.sdp) {
-            // Set remote description with the answer
             await peerConnection.current.setRemoteDescription(
               new RTCSessionDescription({
                 type: "answer",
@@ -126,7 +158,6 @@ const VideoCall = () => {
               })
             );
           } else {
-            // Retry after 1 second if no answer is received yet
             setTimeout(pollAnswer, 1000);
           }
         } catch (err) {
@@ -142,58 +173,128 @@ const VideoCall = () => {
 
   const handleAnswer = async () => {
     try {
-      // Get the offer from the server
-      const response = await axios.post("http://localhost:8080/signal", {
-        type: "get-offer",
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const getOffer = async () => {
+        try {
+          const response = await axios.post("http://localhost:8080/signal", {
+            type: "get-offer",
+            sessionId: sessionId,
+            id: connectionId,
+          });
+
+          if (response.data.sdp) {
+            await peerConnection.current.setRemoteDescription(
+              new RTCSessionDescription({
+                type: "offer",
+                sdp: response.data.sdp,
+              })
+            );
+
+            const answer = await peerConnection.current.createAnswer();
+            await peerConnection.current.setLocalDescription(answer);
+
+            pollCandidates();
+
+            await axios.post("http://localhost:8080/signal", {
+              sdp: answer.sdp,
+              type: "answer",
+              id: connectionId,
+              sessionId: sessionId,
+            });
+          } else {
+            setTimeout(getOffer, 1000);
+          }
+        } catch (err) {
+          console.error("Failed to get offer", err);
+          setTimeout(getOffer, 1000);
+        }
+      };
+      getOffer();
+    } catch (err) {
+      console.error("Failed during answering", err);
+      setTimeout(handleAnswer, 1000);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      !user ||
+      !userId ||
+      !secondUserId ||
+      !sessionId ||
+      !pcReady ||
+      !mediaReady
+    ) {
+      return;
+    }
+
+    if (userId === user.uid) {
+      handleCall();
+    } else if (secondUserId === user.uid) {
+      handleAnswer();
+    } else {
+      console.error("User is neither caller nor callee");
+    }
+  }, [user, userId, secondUserId, sessionId, pcReady, mediaReady]);
+
+  const endCall = async () => {
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      localVideoRef.current.srcObject
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+
+    if (peerConnection.current) {
+      peerConnection.current.close();
+      peerConnection.current = null;
+    }
+
+    try {
+      await axios.post("http://localhost:8080/signal", {
+        type: "hangup",
         sessionId: sessionId,
         id: connectionId,
       });
-
-      if (response.data.sdp) {
-        // Set remote description with the offer
-        await peerConnection.current.setRemoteDescription(
-          new RTCSessionDescription({ type: "offer", sdp: response.data.sdp })
-        );
-
-        // Create an answer and set local description
-        const answer = await peerConnection.current.createAnswer();
-        await peerConnection.current.setLocalDescription(answer);
-
-        // Start polling for ICE candidates immediately after setting local description
-        pollCandidates();
-
-        // Send the answer to the server
-        await axios.post("http://localhost:8080/signal", {
-          sdp: answer.sdp,
-          type: "answer",
-          id: connectionId,
-          sessionId: sessionId,
-        });
-      } else {
-        console.error("No offer SDP received from server");
-      }
+      navigate("/");
     } catch (err) {
-      console.error("Failed during answering", err);
+      console.error("Failed to send hangup signal", err);
     }
   };
 
   return (
-    <div>
-      <video
-        ref={localVideoRef}
-        autoPlay
-        playsInline
-        muted
-        style={{ width: "300px" }}
-      />
+    <div className="relative flex items-center justify-center min-h-screen bg-black">
       <video
         ref={remoteVideoRef}
         autoPlay
         playsInline
-        style={{ width: "300px" }}
+        className="w-full h-full object-cover rounded-lg shadow-lg"
       />
-      <button onClick={handleCall}>Начать звонок</button>
-      <button onClick={handleAnswer}>Ответить на звонок</button>
+
+      <div className="absolute bottom-6 right-6 w-32 h-24 md:w-40 md:h-28 lg:w-48 lg:h-32 border-2 border-gray-700 shadow-lg rounded-lg overflow-hidden">
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="absolute bottom-6 flex gap-4 justify-center w-full">
+        <button className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition">
+          <i className="fas fa-video text-white"></i>
+        </button>
+        <button className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition">
+          <i className="fas fa-microphone text-white"></i>
+        </button>
+        <button
+          className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition"
+          onClick={endCall}
+        >
+          <i className="fas fa-phone-slash text-white"></i>
+        </button>
+      </div>
     </div>
   );
 };

@@ -50,7 +50,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/call",
+        path: "/call/:userId/to/:secondUserId",
         element: (
           <RequireAuth>
             <VideoCall></VideoCall>
