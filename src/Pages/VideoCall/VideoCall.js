@@ -280,12 +280,12 @@ const VideoCall = () => {
   };
 
   return (
-    <div className="relative flex items-center justify-center max-h-96 bg-black">
+    <div className="relative flex items-center justify-center h-[80vh] w-full bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
       <video
         ref={remoteVideoRef}
         autoPlay
         playsInline
-        className="w-full h-full object-cover rounded-lg shadow-lg"
+        className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-lg"
       />
 
       <div className="absolute bottom-6 right-6 w-32 h-24 md:w-40 md:h-28 lg:w-48 lg:h-32 border-2 border-gray-700 shadow-lg rounded-lg overflow-hidden">
