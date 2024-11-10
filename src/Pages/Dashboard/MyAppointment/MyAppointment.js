@@ -111,6 +111,12 @@ const MyAppointment = () => {
                                         </td>
                                         }
                                         {
+                                            appointment.status==="accepted" && 
+                                            <td className="text-center text-[purple] font-bold px-6 py-4 whitespace-nowrap">
+                                            Accepted
+                                        </td>
+                                        }
+                                        {
                                             appointment.status==="completed" && 
                                             <td className="font-bold text-center text-[green] px-6 py-4 whitespace-nowrap">
                                             Completed
@@ -119,11 +125,11 @@ const MyAppointment = () => {
                                 {
                                     appointment.status==="unpaid" ?
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='rounded-full bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-12 border-0 shadow shadow-[black]'>Pay... <FontAwesomeIcon className='text-white' icon={faCreditCard}></FontAwesomeIcon></button>
+                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Pay... <FontAwesomeIcon className='text-white' icon={faCreditCard}></FontAwesomeIcon></button>
                                     </td>
                                     :
                                     <td className="text-lg text-white font-semibold px-6 py-4 whitespace-nowrap text-center">
-                                        <span className='rounded-full text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary font-bold py-3 px-4'>Paid:  {appointment.transactionId}</span>
+                                        <span className='rounded-lg text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary text-sm font-bold py-3 px-4 border-0 shadow shadow-[black]'>Paid:  {appointment.transactionId}</span>
                                     </td>
                                 }
                                 {/* <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel</button></td> */}

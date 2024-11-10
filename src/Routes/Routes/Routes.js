@@ -17,6 +17,9 @@ import AllBookings from "../../Pages/Dashboard/AllBookings/AllBookings";
 import ApplyDoctor from "../../Pages/ApplyDoctor/ApplyDoctor";
 import DoctorsApplication from "../../Pages/Dashboard/DoctorsApplication/DoctorsApplication";
 import Payment from "../../Pages/Dashboard/Checkout/Payment";
+import VideoCall from "../../Pages/VideoCall/VideoCall";
+import DoctorAppointment from "../../Pages/Dashboard/DoctorAppointment/DoctorAppointment";
+import RequireDoctor from "../../Pages/Login/RequireDoctor";
 
 const router = createBrowserRouter([
     {
@@ -48,6 +51,14 @@ const router = createBrowserRouter([
                 element: <RequireAuth><Appointment></Appointment></RequireAuth>
             },
             {
+                path: "/call/:userId/to/:secondUserId",
+                element: (
+                  <RequireAuth>
+                    <VideoCall />
+                  </RequireAuth>
+                ),
+              },
+            {
                 path: '/dashboard',
                 element: <RequireAuth>
                     <Dashboard></Dashboard>
@@ -64,6 +75,10 @@ const router = createBrowserRouter([
                     {
                         path: '/dashboard/my_history',
                         element: <MyHistory></MyHistory>
+                    },
+                    {
+                        path: '/dashboard/doctor_appointment',
+                        element: <RequireDoctor><DoctorAppointment></DoctorAppointment></RequireDoctor>
                     },
                     {
                         path: '/dashboard/users',

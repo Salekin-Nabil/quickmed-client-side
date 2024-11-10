@@ -61,7 +61,7 @@ const Login = () => {
     // },[token,from,navigate]);
 
     if (user || user1 || user2) {
-             navigate(from, { replace: true });
+            navigate(from, { replace: true });
          }
     
     let errorElement;
