@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
 import auth from "../../firebase.init";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useParams, useNavigate } from "react-router-dom";
@@ -9,15 +8,18 @@ const VideoCall = () => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnection = useRef(null);
+  const localStream = useRef(null); 
   const { userId, secondUserId } = useParams();
   const navigate = useNavigate();
 
   const [connectionId, setConnectionId] = useState(null);
   const [sessionId, setSessionId] = useState(null);
-  const [pcReady, setPcReady] = useState(false);
-  const [mediaReady, setMediaReady] = useState(false);
 
-  const addedCandidates = useRef(new Set());
+  const ws = useRef(null);
+  const iceCandidatesQueue = useRef([]);
+
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -36,41 +38,81 @@ const VideoCall = () => {
   useEffect(() => {
     if (!connectionId || !sessionId) return;
 
+    ws.current = new WebSocket("wss://quick-med.fly.dev/ws/call");
+
+    ws.current.onopen = () => {
+      ws.current.send(
+        JSON.stringify({
+          type: "init",
+          id: connectionId,
+          sessionId: sessionId,
+        })
+      );
+    };
+
+    ws.current.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case "offer":
+          await handleOfferMsg(data);
+          break;
+        case "answer":
+          await handleAnswerMsg(data);
+          break;
+        case "candidate":
+          await handleNewICECandidateMsg(data);
+          break;
+        case "hangup":
+          await handleHangupMsg();
+          break;
+        default:
+          break;
+      }
+    };
+
+    ws.current.onclose = () => {};
+
+    ws.current.onerror = (error) => {};
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [connectionId, sessionId]);
+
+  useEffect(() => {
+    if (!connectionId || !sessionId) return;
+
     const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
-      ],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
     peerConnection.current = pc;
 
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
+        localStream.current = stream; 
         localVideoRef.current.srcObject = stream;
         stream.getTracks().forEach((track) => {
           pc.addTrack(track, stream);
         });
-        setMediaReady(true);
       })
       .catch((err) => {
-        console.error("Failed to get local media", err);
-        alert("Waiting for the patient to recieve the call.");
+        alert("Couldn't get access to microphone or camera.");
       });
 
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        axios
-          .post("https://quick-med.fly.dev/signal", {
-            candidate: event.candidate,
+      if (event.candidate && ws.current) {
+        ws.current.send(
+          JSON.stringify({
             type: "candidate",
-            sessionId: sessionId,
+            candidate: event.candidate,
             id: connectionId,
+            sessionId: sessionId,
           })
-          .catch((err) => console.error("Failed to send ICE candidate", err));
+        );
       }
     };
 
@@ -80,10 +122,29 @@ const VideoCall = () => {
       }
     };
 
-    pc.oniceconnectionstatechange = () => {};
-    pc.onconnectionstatechange = () => {};
+    const sortedIds = [userId, secondUserId].sort();
+    const isInitiator = connectionId === sortedIds[0];
 
-    setPcReady(true);
+    if (isInitiator) {
+      pc.addEventListener("negotiationneeded", async () => {
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws.current.send(
+            JSON.stringify({
+              type: "offer",
+              sdp: pc.localDescription,
+              id: connectionId,
+              sessionId: sessionId,
+            })
+          );
+        } catch (err) {}
+      });
+    }
+
+    pc.addEventListener("iceconnectionstatechange", () => {
+      if (pc.iceConnectionState === "failed") {}
+    });
 
     return () => {
       if (localVideoRef.current && localVideoRef.current.srcObject) {
@@ -97,163 +158,72 @@ const VideoCall = () => {
         peerConnection.current = null;
       }
 
-      axios
-        .post("https://quick-med.fly.dev/signal", {
-          type: "hangup",
-          sessionId: sessionId,
-          id: connectionId,
-        })
-        .catch((err) => console.error("Failed to send hangup signal", err));
+      if (ws.current) {
+        ws.current.send(
+          JSON.stringify({
+            type: "hangup",
+            id: connectionId,
+            sessionId: sessionId,
+          })
+        );
+        ws.current.close();
+      }
     };
   }, [connectionId, sessionId]);
 
-  const getCandidates = async () => {
+  const handleOfferMsg = async (data) => {
     try {
-      const response = await axios.post("https://quick-med.fly.dev/signal", {
-        type: "get-candidates",
-        sessionId: sessionId,
-        id: connectionId,
-      });
+      const desc = new RTCSessionDescription(data.sdp);
+      await peerConnection.current.setRemoteDescription(desc);
 
-      const candidates = response.data.candidates;
+      const answer = await peerConnection.current.createAnswer();
+      await peerConnection.current.setLocalDescription(answer);
+      ws.current.send(
+        JSON.stringify({
+          type: "answer",
+          sdp: peerConnection.current.localDescription,
+          id: connectionId,
+          sessionId: sessionId,
+        })
+      );
 
-      if (Array.isArray(candidates) && candidates.length > 0) {
-        for (const candidate of candidates) {
-          const candidateKey =
-            candidate.candidate +
-            "|" +
-            candidate.sdpMid +
-            "|" +
-            candidate.sdpMLineIndex;
-          if (!addedCandidates.current.has(candidateKey)) {
-            try {
-              await peerConnection.current.addIceCandidate(candidate);
-              addedCandidates.current.add(candidateKey);
-            } catch (error) {
-              console.error("Error adding ICE candidate:", error);
-            }
-          }
-        }
+      while (iceCandidatesQueue.current.length) {
+        const candidate = iceCandidatesQueue.current.shift();
+        await peerConnection.current.addIceCandidate(candidate);
       }
-    } catch (err) {
-      console.error("Failed to get ICE candidates", err);
-    }
+    } catch (err) {}
   };
 
-  const pollCandidates = () => {
-    getCandidates();
-    setTimeout(pollCandidates, 1000);
-  };
-
-  const handleCall = async () => {
+  const handleAnswerMsg = async (data) => {
     try {
-      const offer = await peerConnection.current.createOffer();
-      await peerConnection.current.setLocalDescription(offer);
+      const desc = new RTCSessionDescription(data.sdp);
+      await peerConnection.current.setRemoteDescription(desc);
 
-      pollCandidates();
-
-      await axios.post("https://quick-med.fly.dev/signal", {
-        sdp: offer.sdp,
-        type: "offer",
-        id: connectionId,
-        sessionId: sessionId,
-      });
-
-      const pollAnswer = async () => {
-        try {
-          const response = await axios.post("https://quick-med.fly.dev/signal", {
-            type: "get-answer",
-            sessionId: sessionId,
-            id: connectionId,
-          });
-
-          if (response.data.sdp) {
-            await peerConnection.current.setRemoteDescription(
-              new RTCSessionDescription({
-                type: "answer",
-                sdp: response.data.sdp,
-              })
-            );
-          } else {
-            setTimeout(pollAnswer, 1000);
-          }
-        } catch (err) {
-          console.error("Failed to get answer", err);
-          setTimeout(pollAnswer, 1000);
-        }
-      };
-      pollAnswer();
-    } catch (err) {
-      console.error("Failed during call setup", err);
-    }
+      while (iceCandidatesQueue.current.length) {
+        const candidate = iceCandidatesQueue.current.shift();
+        await peerConnection.current.addIceCandidate(candidate);
+      }
+    } catch (err) {}
   };
 
-  const handleAnswer = async () => {
+  const handleNewICECandidateMsg = async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const getOffer = async () => {
-        try {
-          const response = await axios.post("https://quick-med.fly.dev/signal", {
-            type: "get-offer",
-            sessionId: sessionId,
-            id: connectionId,
-          });
-
-          if (response.data.sdp) {
-            await peerConnection.current.setRemoteDescription(
-              new RTCSessionDescription({
-                type: "offer",
-                sdp: response.data.sdp,
-              })
-            );
-
-            const answer = await peerConnection.current.createAnswer();
-            await peerConnection.current.setLocalDescription(answer);
-
-            pollCandidates();
-
-            await axios.post("https://quick-med.fly.dev/signal", {
-              sdp: answer.sdp,
-              type: "answer",
-              id: connectionId,
-              sessionId: sessionId,
-            });
-          } else {
-            setTimeout(getOffer, 1000);
-          }
-        } catch (err) {
-          console.error("Failed to get offer", err);
-          setTimeout(getOffer, 1000);
-        }
-      };
-      getOffer();
-    } catch (err) {
-      console.error("Failed during answering", err);
-      setTimeout(handleAnswer, 1000);
-    }
+      const candidate = new RTCIceCandidate(data.candidate);
+      if (peerConnection.current.remoteDescription) {
+        await peerConnection.current.addIceCandidate(candidate);
+      } else {
+        iceCandidatesQueue.current.push(candidate);
+      }
+    } catch (err) {}
   };
 
-  useEffect(() => {
-    if (
-      !user ||
-      !userId ||
-      !secondUserId ||
-      !sessionId ||
-      !pcReady ||
-      !mediaReady
-    ) {
-      return;
+  const handleHangupMsg = async () => {
+    if (peerConnection.current) {
+      peerConnection.current.close();
+      peerConnection.current = null;
     }
-
-    if (userId === user.uid) {
-      handleCall();
-    } else if (secondUserId === user.uid) {
-      handleAnswer();
-    } else {
-      console.error("User is neither caller nor callee");
-    }
-  }, [user, userId, secondUserId, sessionId, pcReady, mediaReady]);
+    navigate("/");
+  };
 
   const endCall = async () => {
     if (localVideoRef.current && localVideoRef.current.srcObject) {
@@ -267,15 +237,34 @@ const VideoCall = () => {
       peerConnection.current = null;
     }
 
-    try {
-      await axios.post("https://quick-med.fly.dev/signal", {
-        type: "hangup",
-        sessionId: sessionId,
-        id: connectionId,
+    if (ws.current) {
+      ws.current.send(
+        JSON.stringify({
+          type: "hangup",
+          id: connectionId,
+          sessionId: sessionId,
+        })
+      );
+      ws.current.close();
+    }
+    navigate("/");
+  };
+
+  const toggleVideo = () => {
+    if (localStream.current) {
+      localStream.current.getVideoTracks().forEach((track) => {
+        track.enabled = !track.enabled;
+        setIsVideoEnabled(track.enabled);
       });
-      navigate("/");
-    } catch (err) {
-      console.error("Failed to send hangup signal", err);
+    }
+  };
+
+  const toggleAudio = () => {
+    if (localStream.current) {
+      localStream.current.getAudioTracks().forEach((track) => {
+        track.enabled = !track.enabled;
+        setIsAudioEnabled(track.enabled);
+      });
     }
   };
 
@@ -299,11 +288,25 @@ const VideoCall = () => {
       </div>
 
       <div className="absolute bottom-6 flex gap-4 justify-center w-full">
-        <button className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition">
-          <i className="fas fa-video text-white"></i>
+        <button
+          className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+          onClick={toggleVideo}
+        >
+          <i
+            className={`fas ${
+              isVideoEnabled ? "fa-video" : "fa-video-slash"
+            } text-white`}
+          ></i>
         </button>
-        <button className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition">
-          <i className="fas fa-microphone text-white"></i>
+        <button
+          className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+          onClick={toggleAudio}
+        >
+          <i
+            className={`fas ${
+              isAudioEnabled ? "fa-microphone" : "fa-microphone-slash"
+            } text-white`}
+          ></i>
         </button>
         <button
           className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition"
