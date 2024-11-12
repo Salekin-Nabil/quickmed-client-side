@@ -18,6 +18,9 @@ const DoctorAppointment = () => {
     const { initiateCall } = useCall();
     const [appointments, setAppoinments] = useState([]);
     const [userInfo, setUserInfo] = useState([]);
+    const [userID, setUserID] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [wallet, setWallet] = useState('');
     const [user, loading, error] = useAuthState(auth);
     const navigate = useNavigate();
 
@@ -36,6 +39,33 @@ const DoctorAppointment = () => {
     //     }
     // })
 
+    // const {data: users, isLoading, refetch} = useQuery({
+    //     queryKey: ['users'],
+    //     queryFn: async() =>{
+    //         const res = await fetch('http://localhost:3000/users', {
+    //           method: 'GET',
+    //           headers: {
+    //             authorization: `Bearer ${localStorage.getItem('accessToken')}`
+    //           }
+    //         });
+    //         const data = await res.json();
+    //         return data;
+    //     }
+    // });
+
+    useEffect(() => {
+            fetch('http://localhost:3000/users', {
+                method: 'GET',
+                headers:{
+                    'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                }
+            })
+            .then(res => {return res.json()})
+            .then(data => {
+                setUsers(data)
+            });
+    }, []);
+
     useEffect(() => {
         if(user) {
             fetch(url_1, {
@@ -45,7 +75,6 @@ const DoctorAppointment = () => {
                 }
             })
             .then(res => {
-                console.log("res:", res);
                 if(res.status === 401 || res.status === 403){
                     signOut(auth);
                     localStorage.removeItem("accessToken");
@@ -69,7 +98,6 @@ const DoctorAppointment = () => {
                 }
             })
             .then(res => {
-                console.log("res:", res);
                 if(res.status === 401 || res.status === 403){
                     signOut(auth);
                     localStorage.removeItem("accessToken");
@@ -82,7 +110,7 @@ const DoctorAppointment = () => {
         }
     }, [userInfo.specialization]);
 
-    const handleAcceptBooking = id => {
+    const handleAcceptBooking = (id, email) => {
         fetch(`http://localhost:3000/bookings_accepted/${id}`, {
             method: 'PATCH', 
             headers: {
@@ -109,9 +137,72 @@ const DoctorAppointment = () => {
                 setAppoinments(data)
             });
             toast.success('Appointment accepted successfully.');
-        })};
+        })
+        
+        fetch(`http://localhost:3000/users/${email}`, {
+            method: 'GET', 
+            headers: {
+                'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }
+        }).then(res => {return res.json()})
+        .then(data => {
+            console.log(data);
+            setUserID(data)
+        });
+    
+    };
 
+    const callMaker = (appointmentID) => {
+        
+        const id = {
+            "appointment_id": appointmentID,
+            "status": "ongoing"
+        }
 
+        const url = `http://localhost:3000/reviews/${appointmentID}`;
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(id)
+        })
+        .then(res=> res.json())
+        .then(result =>{
+            console.log(result);
+        });
+
+        initiateCall("oO44lp9ao3WGpOgR2zmvqk0Jxij2")
+    };
+
+    const navigateToPatient = (email) => {
+        fetch(`http://localhost:3000/users/wallet/${email}`, {
+          method: 'GET',
+          headers: {
+            'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json(); // Parse the JSON from the response
+          })
+          .then(data => {
+            console.log("The Wallet is:", data.walletAddress);
+            setWallet(data.walletAddress); // Set the wallet address
+          })
+          .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+          });
+      };
+    
+      useEffect(() => {
+        if (wallet) {
+          // Navigate only after wallet is updated
+          navigate(`/dashboard/consult_patient/${wallet}`);
+        }
+      }, [wallet, navigate]);
 
     return (
         <div className='mb-[60px] mx-[10px]'>
@@ -132,6 +223,7 @@ const DoctorAppointment = () => {
                             <th className='py-5'>Time</th>
                             <th className='py-5'>Location</th>
                             <th className='py-5'>Action</th>
+                            <th className='py-5'>Report</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -161,14 +253,24 @@ const DoctorAppointment = () => {
                                 {
                                     appointment.status==="pending" &&
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>handleAcceptBooking(appointment._id)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Accept... <FontAwesomeIcon className='text-white' icon={faCheckToSlot}></FontAwesomeIcon></button>
+                                    <button onClick={()=>handleAcceptBooking(appointment._id, appointment.email)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Accept... <FontAwesomeIcon className='text-white' icon={faCheckToSlot}></FontAwesomeIcon></button>
                                     </td>
                                 }
                                 {
                                     appointment.status==="accepted" &&
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>initiateCall("oO44lp9ao3WGpOgR2zmvqk0Jxij2")} className='text-sm rounded-md bg-[red] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Call... <FontAwesomeIcon className='text-white' icon={faPhoneFlip}></FontAwesomeIcon></button>
+                                    <button onClick={()=>callMaker(appointment._id)} className='text-sm rounded-md bg-[red] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Call... <FontAwesomeIcon className='text-white' icon={faPhoneFlip} shake></FontAwesomeIcon></button>
                                     </td>
+                                }
+                                {
+                                    Object.keys(users.filter((user) => user.email == appointment.email && user?.profileCreated == "True")).length != 0 ?
+                                    <td className="text-center text-white px-6 py-4 whitespace-nowrap">
+                                        <button onClick={()=>navigateToPatient(appointment.email)} className='text-sm rounded-md bg-[#e7be4eef] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Report Submit... <FontAwesomeIcon className='text-white' icon={faCheckToSlot}></FontAwesomeIcon></button>
+                                    </td>
+                                    :
+                                    <td className="text-center  font-bold text-[#e7be4eef] px-6 py-4 whitespace-nowrap">
+                                            Profile not Created
+                                        </td>
                                 }
                             </tr>)
                         }

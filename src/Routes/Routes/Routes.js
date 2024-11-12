@@ -10,6 +10,10 @@ import RequireAuth from "../../Pages/Login/RequireAuth";
 import MyAppointment from "../../Pages/Dashboard/MyAppointment/MyAppointment";
 import Dashboard from "../../Pages/Dashboard/Dashboard/Dashboard";
 import MyReviews from "../../Pages/Dashboard/MyReviews/MyReviews";
+import MyProfile from "../../Pages/Dashboard/MyProfile/MyProfile";
+import CreateProfile from "../../Pages/Dashboard/CreateProfile/CreateProfile";
+import UpdateProfile from "../../Pages/Dashboard/UpdateProfile/UpdateProfile";
+import ViewProfile from "../../Pages/Dashboard/ViewProfile/ViewProfile";
 import MyHistory from "../../Pages/Dashboard/MyHistory/MyHistory";
 import AllUsers from "../../Pages/Dashboard/AllUsers/AllUsers";
 import RequireAdmin from "../../Pages/Login/RequireAdmin";
@@ -20,6 +24,7 @@ import Payment from "../../Pages/Dashboard/Checkout/Payment";
 import VideoCall from "../../Pages/VideoCall/VideoCall";
 import DoctorAppointment from "../../Pages/Dashboard/DoctorAppointment/DoctorAppointment";
 import RequireDoctor from "../../Pages/Login/RequireDoctor";
+import ConsultPatient from "../../Pages/Dashboard/ConsultPatient/ConsultPatient";
 
 const router = createBrowserRouter([
     {
@@ -73,12 +78,32 @@ const router = createBrowserRouter([
                         element: <MyReviews></MyReviews>
                     },
                     {
+                        path: '/dashboard/my_profile',
+                        element: <MyProfile></MyProfile>
+                    },
+                    {
+                        path: '/dashboard/my_profile/create_profile',
+                        element: <CreateProfile></CreateProfile>
+                    },
+                    {
+                        path: '/dashboard/my_profile/update_profile',
+                        element: <UpdateProfile></UpdateProfile>
+                    },
+                    {
+                        path: '/dashboard/my_profile/view_profile',
+                        element: <ViewProfile></ViewProfile>
+                    },
+                    {
                         path: '/dashboard/my_history',
                         element: <MyHistory></MyHistory>
                     },
                     {
                         path: '/dashboard/doctor_appointment',
                         element: <RequireDoctor><DoctorAppointment></DoctorAppointment></RequireDoctor>
+                    },
+                    {
+                        path: '/dashboard/consult_patient/:wallet',
+                        element: <RequireDoctor><ConsultPatient></ConsultPatient></RequireDoctor>
                     },
                     {
                         path: '/dashboard/users',

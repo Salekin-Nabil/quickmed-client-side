@@ -125,7 +125,7 @@ const MyAppointment = () => {
                                 {
                                     appointment.status==="unpaid" ?
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Pay... <FontAwesomeIcon className='text-white' icon={faCreditCard}></FontAwesomeIcon></button>
+                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Pay ------- <FontAwesomeIcon className='text-white' icon={faCreditCard} bounce></FontAwesomeIcon></button>
                                     </td>
                                     :
                                     <td className="text-lg text-white font-semibold px-6 py-4 whitespace-nowrap text-center">
@@ -135,7 +135,7 @@ const MyAppointment = () => {
                                 {/* <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel</button></td> */}
                                 {
                                             appointment.status==="unpaid" ?
-                                            <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel... <FontAwesomeIcon className='text-white' icon={faTrashCan}></FontAwesomeIcon></button></td>
+                                            <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel... <FontAwesomeIcon className='text-white' icon={faTrashCan} fade></FontAwesomeIcon></button></td>
                                         :
                                         <td className="text-lg text-center text-white font-semibold px-6 py-4 whitespace-nowrap">
                                             <span className='rounded-full text-red-700 py-3 px-4'>Can't Delete</span>
