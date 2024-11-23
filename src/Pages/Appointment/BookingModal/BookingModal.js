@@ -46,6 +46,7 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
         .then(data => {
             if (data.acknowledged){
                 alert(`Your Booking is Successfully Enlisted on ${date} at ${slot}`);
+                sendEmail(booking);
                 // notify();
             }
             else {
@@ -55,7 +56,6 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
             
             refetch();
             setTreatment(null);
-            sendEmail(booking);
         })
 
         // TODO: send data to the server

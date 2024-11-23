@@ -10,6 +10,7 @@ const VideoCall = () => {
   const peerConnection = useRef(null);
   const localStream = useRef(null); 
   const { userId, secondUserId } = useParams();
+  const { appointmentID } = useParams();
   const navigate = useNavigate();
 
   const [connectionId, setConnectionId] = useState(null);
@@ -86,7 +87,14 @@ const VideoCall = () => {
     if (!connectionId || !sessionId) return;
 
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      // iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" },
+      ],
     });
     peerConnection.current = pc;
 
@@ -230,6 +238,18 @@ const VideoCall = () => {
       localVideoRef.current.srcObject
         .getTracks()
         .forEach((track) => track.stop());
+
+        const url = `http://localhost:3000/bookings/calls/ended/${appointmentID}`;
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'content-type': 'application/json'
+            },
+        })
+        .then(res=> res.json())
+        .then(result =>{
+            console.log(result);
+        });
     }
 
     if (peerConnection.current) {

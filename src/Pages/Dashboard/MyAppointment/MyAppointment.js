@@ -117,6 +117,12 @@ const MyAppointment = () => {
                                         </td>
                                         }
                                         {
+                                            appointment.status==="ongoing" && 
+                                            <td className="font-bold text-center text-[#91c929b2] px-6 py-4 whitespace-nowrap">
+                                            Ongoing Consultaion
+                                        </td>
+                                        }
+                                        {
                                             appointment.status==="completed" && 
                                             <td className="font-bold text-center text-[green] px-6 py-4 whitespace-nowrap">
                                             Completed

@@ -56,7 +56,7 @@ const router = createBrowserRouter([
                 element: <RequireAuth><Appointment></Appointment></RequireAuth>
             },
             {
-                path: "/call/:userId/to/:secondUserId",
+                path: "/call/:userId/to/:secondUserId/for/:appointmentID",
                 element: (
                   <RequireAuth>
                     <VideoCall />

@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 // import React, { useContext } from 'react';
 import React, { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -20,6 +19,7 @@ const DoctorAppointment = () => {
     const [userInfo, setUserInfo] = useState([]);
     const [userID, setUserID] = useState([]);
     const [users, setUsers] = useState([]);
+    const [doctor, setDoctor] = useState([]);
     const [wallet, setWallet] = useState('');
     const [user, loading, error] = useAuthState(auth);
     const navigate = useNavigate();
@@ -65,6 +65,22 @@ const DoctorAppointment = () => {
                 setUsers(data)
             });
     }, []);
+
+    useEffect(() => {
+        if(user) {
+            fetch(`http://localhost:3000/users/${user?.email}`, {
+                method: 'GET',
+                headers:{
+                    'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                }
+            })
+            .then(res => {
+                return res.json()})
+            .then(data => {
+                setDoctor(data)
+            });
+        }
+    }, [user]);
 
     useEffect(() => {
         if(user) {
@@ -152,27 +168,35 @@ const DoctorAppointment = () => {
     
     };
 
-    const callMaker = (appointmentID) => {
-        
-        const id = {
-            "appointment_id": appointmentID,
-            "status": "ongoing"
-        }
+    const callMaker = (appointmentID, email) => {
 
-        const url = `http://localhost:3000/reviews/${appointmentID}`;
+        const url = `http://localhost:3000/bookings/calls/started/${appointmentID}`;
         fetch(url, {
             method: 'PUT',
             headers: {
                 'content-type': 'application/json'
             },
-            body: JSON.stringify(id)
         })
         .then(res=> res.json())
         .then(result =>{
-            console.log(result);
+            console.log("Call Status: ", result);
         });
 
-        initiateCall("oO44lp9ao3WGpOgR2zmvqk0Jxij2")
+        fetch(`http://localhost:3000/users/${email}`, {
+            method: 'GET', 
+            headers: {
+                'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            setUserID(data); // Set the user ID here
+            
+            // Now that userID is set, initiate the call here
+            initiateCall(doctor, data._id, appointmentID);
+        });
+
+        // initiateCall("ENj33EbFCESwmpJz0IzezVaHJg62");
     };
 
     const navigateToPatient = (email) => {
@@ -253,17 +277,23 @@ const DoctorAppointment = () => {
                                 {
                                     appointment.status==="pending" &&
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>handleAcceptBooking(appointment._id, appointment.email)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Accept... <FontAwesomeIcon className='text-white' icon={faCheckToSlot}></FontAwesomeIcon></button>
+                                    <button onClick={()=>handleAcceptBooking(appointment._id, appointment.email)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Accept... <FontAwesomeIcon className='text-white' icon={faCheckToSlot} beatFade></FontAwesomeIcon></button>
                                     </td>
+                                }
+                                {
+                                    appointment.status==="ongoing" &&
+                                    <td className="font-bold text-center text-[goldenrod] px-6 py-4 whitespace-nowrap">
+                                            Ongoing Consultaion
+                                        </td>
                                 }
                                 {
                                     appointment.status==="accepted" &&
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>callMaker(appointment._id)} className='text-sm rounded-md bg-[red] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Call... <FontAwesomeIcon className='text-white' icon={faPhoneFlip} shake></FontAwesomeIcon></button>
+                                    <button onClick={()=>callMaker(appointment._id, appointment.email)} className='text-sm rounded-md bg-[red] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Call... <FontAwesomeIcon className='text-white' icon={faPhoneFlip} shake></FontAwesomeIcon></button>
                                     </td>
                                 }
                                 {
-                                    Object.keys(users.filter((user) => user.email == appointment.email && user?.profileCreated == "True")).length != 0 ?
+                                    Object.keys(users.filter((user) => user.email === appointment.email && user?.profileCreated === "True")).length !== 0 ?
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
                                         <button onClick={()=>navigateToPatient(appointment.email)} className='text-sm rounded-md bg-[#e7be4eef] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Report Submit... <FontAwesomeIcon className='text-white' icon={faCheckToSlot}></FontAwesomeIcon></button>
                                     </td>

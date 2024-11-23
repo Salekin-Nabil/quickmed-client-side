@@ -58,25 +58,9 @@ const ConsultPatient = () => {
       .then((accounts) => {
         const acc = accounts[0];
         return patientRecord.methods
-          .updatePrescription(
+          .updateReport(
             wallet,
-            prescriptionRef.current.value
-          )
-          .send({ from: acc });
-      })
-      .then((tx) => {
-        console.log('Transaction successful:', tx);
-      })
-      .catch((err) => {
-        console.error('Error during transaction:', err);
-      });
-
-    web3.eth.getAccounts()
-      .then((accounts) => {
-        const acc = accounts[0];
-        return patientRecord.methods
-          .updateMedicalTestResults(
-            wallet,
+            prescriptionRef.current.value,
             testResultRef.current.value
           )
           .send({ from: acc });
@@ -183,7 +167,7 @@ const ConsultPatient = () => {
                                 shadow-lg shadow-[gray] hover:shadow-xl hover:shadow-[gray]
                                 transition
                                 duration-150
-                                ease-in-out">Create</button>
+                                ease-in-out">Submit</button>
                     </form>
                 </div>
                 <div className='hidden md:block'>
