@@ -63,7 +63,7 @@ const CreateProfile = () => {
       .then((accounts) => {
         const acc = accounts[0];
         const data = {"walletAddress":acc};
-        fetch(`http://localhost:3000/users/wallet/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/wallet/${email}`, {
             method: 'PUT',
             headers: {
                 'content-type': 'application/json'

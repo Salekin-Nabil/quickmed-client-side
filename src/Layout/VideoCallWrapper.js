@@ -8,7 +8,7 @@ const VideoCallWrapper = ({ children }) => {
   const [caller, setCaller] = useState();
   useEffect(() => {
     if (incomingCall) {
-      fetch(`http://localhost:3000/users/id/${incomingCall.from_id}`, {
+      fetch(`https://quickmed-server-side.onrender.com/users/id/${incomingCall.from_id}`, {
         method: 'GET',
         headers:{
             'authorization': `Bearer ${localStorage.getItem('accessToken')}`

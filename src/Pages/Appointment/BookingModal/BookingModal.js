@@ -35,7 +35,7 @@ const BookingModal = ({ treatment, setTreatment, selectedDate, refetch }) => {
             status: "unpaid"
         }
 
-        fetch('http://localhost:3000/bookings', {
+        fetch('https://quickmed-server-side.onrender.com/bookings', {
             method: "POST",
             headers:{
                 "content-type": "application/json"

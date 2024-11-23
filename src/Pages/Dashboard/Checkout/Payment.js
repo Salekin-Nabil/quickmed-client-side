@@ -15,7 +15,7 @@ const stripePromise = loadStripe('pk_test_51L4A74Hfd0Dg1f5ftju9pevdLs2UDTt8fG3yk
 const Payment = () => {
     const {id} = useParams();
 
-    const url = `http://localhost:3000/bookings/${id}`;
+    const url = `https://quickmed-server-side.onrender.com/bookings/${id}`;
 
     const { data: booking, isLoading } = useQuery(['booking', id], () => fetch(url, {
         method: 'GET',

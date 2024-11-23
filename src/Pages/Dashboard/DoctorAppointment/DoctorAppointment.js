@@ -24,7 +24,7 @@ const DoctorAppointment = () => {
     const [user, loading, error] = useAuthState(auth);
     const navigate = useNavigate();
 
-    const url_1 = `http://localhost:3000/doctors_info?email=${user?.email}`;
+    const url_1 = `https://quickmed-server-side.onrender.com/doctors_info?email=${user?.email}`;
 
     // const { data: bookings = [] } = useQuery({
     //     queryKey: ['bookings', user?.email],
@@ -42,7 +42,7 @@ const DoctorAppointment = () => {
     // const {data: users, isLoading, refetch} = useQuery({
     //     queryKey: ['users'],
     //     queryFn: async() =>{
-    //         const res = await fetch('http://localhost:3000/users', {
+    //         const res = await fetch('https://quickmed-server-side.onrender.com/users', {
     //           method: 'GET',
     //           headers: {
     //             authorization: `Bearer ${localStorage.getItem('accessToken')}`
@@ -54,7 +54,7 @@ const DoctorAppointment = () => {
     // });
 
     useEffect(() => {
-            fetch('http://localhost:3000/users', {
+            fetch('https://quickmed-server-side.onrender.com/users', {
                 method: 'GET',
                 headers:{
                     'authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -68,7 +68,7 @@ const DoctorAppointment = () => {
 
     useEffect(() => {
         if(user) {
-            fetch(`http://localhost:3000/users/${user?.email}`, {
+            fetch(`https://quickmed-server-side.onrender.com/users/${user?.email}`, {
                 method: 'GET',
                 headers:{
                     'authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -103,7 +103,7 @@ const DoctorAppointment = () => {
         }
     }, [user]);
 
-    const url = `http://localhost:3000/all_bookings_for_doctor?service=${userInfo.specialization}`;
+    const url = `https://quickmed-server-side.onrender.com/all_bookings_for_doctor?service=${userInfo.specialization}`;
 
     useEffect(() => {
         if(userInfo.specialization) {
@@ -127,7 +127,7 @@ const DoctorAppointment = () => {
     }, [userInfo.specialization]);
 
     const handleAcceptBooking = (id, email) => {
-        fetch(`http://localhost:3000/bookings_accepted/${id}`, {
+        fetch(`https://quickmed-server-side.onrender.com/bookings_accepted/${id}`, {
             method: 'PATCH', 
             headers: {
                 'content-type': 'application/json',
@@ -155,7 +155,7 @@ const DoctorAppointment = () => {
             toast.success('Appointment accepted successfully.');
         })
         
-        fetch(`http://localhost:3000/users/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/${email}`, {
             method: 'GET', 
             headers: {
                 'authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -170,7 +170,7 @@ const DoctorAppointment = () => {
 
     const callMaker = (appointmentID, email) => {
 
-        const url = `http://localhost:3000/bookings/calls/started/${appointmentID}`;
+        const url = `https://quickmed-server-side.onrender.com/bookings/calls/started/${appointmentID}`;
         fetch(url, {
             method: 'PUT',
             headers: {
@@ -182,7 +182,7 @@ const DoctorAppointment = () => {
             console.log("Call Status: ", result);
         });
 
-        fetch(`http://localhost:3000/users/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/${email}`, {
             method: 'GET', 
             headers: {
                 'authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -200,7 +200,7 @@ const DoctorAppointment = () => {
     };
 
     const navigateToPatient = (email) => {
-        fetch(`http://localhost:3000/users/wallet/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/wallet/${email}`, {
           method: 'GET',
           headers: {
             'authorization': `Bearer ${localStorage.getItem('accessToken')}`

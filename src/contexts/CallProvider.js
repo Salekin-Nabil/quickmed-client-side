@@ -15,7 +15,7 @@ export const CallProvider = ({ children }) => {
 
   useEffect(() => {
       if(user) {
-        fetch(`http://localhost:3000/users/${user.email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/${user.email}`, {
           method: 'GET', 
           headers: {
               'authorization': `Bearer ${localStorage.getItem('accessToken')}`

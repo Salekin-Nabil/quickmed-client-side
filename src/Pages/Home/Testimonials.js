@@ -60,7 +60,7 @@ const Testimonials = () => {
     const [reviews,setReviews] = useState({});
 
     useEffect(()=>{
-        fetch("http://localhost:3000/reviews_3")
+        fetch("https://quickmed-server-side.onrender.com/reviews_3")
         .then(res=>res.json())
         .then(data=>setReviews(data));
     }, []);

@@ -6,7 +6,7 @@ const useDoctor = user => {
     useEffect(() => {
         const email = user?.email;
         if (email) {
-            fetch(`http://localhost:3000/users/doctor/${email}`, {
+            fetch(`https://quickmed-server-side.onrender.com/users/doctor/${email}`, {
                 method: 'GET',
                 headers: {
                     'content-type': 'application/json',

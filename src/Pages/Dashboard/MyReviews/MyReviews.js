@@ -29,7 +29,7 @@ const MyReviews = () => {
         };
         console.log(data);
         
-        const url = `http://localhost:3000/reviews/${email}`;
+        const url = `https://quickmed-server-side.onrender.com/reviews/${email}`;
         fetch(url, {
             method: 'PUT',
             headers: {

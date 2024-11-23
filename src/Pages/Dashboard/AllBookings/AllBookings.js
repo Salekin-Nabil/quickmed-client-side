@@ -15,7 +15,7 @@ const AllBookings = () => {
     const [user, loading, error] = useAuthState(auth);
     const navigate = useNavigate();
 
-    const url = `http://localhost:3000/all_bookings`;
+    const url = `https://quickmed-server-side.onrender.com/all_bookings`;
 
     // const { data: bookings = [] } = useQuery({
     //     queryKey: ['bookings', user?.email],

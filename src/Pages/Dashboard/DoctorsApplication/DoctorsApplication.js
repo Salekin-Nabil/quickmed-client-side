@@ -9,7 +9,7 @@ const DoctorsApplication = () => {
     // const {data: users = [], isLoading, refetch} = useQuery({
     //     queryKey: ['users'],
     //     queryFn: async() =>{
-    //         const res = await fetch('http://localhost:3000/users');
+    //         const res = await fetch('https://quickmed-server-side.onrender.com/users');
     //         if(isLoading){
     //           return <Loading></Loading>
     //         }
@@ -20,7 +20,7 @@ const DoctorsApplication = () => {
     const {data: doctors, isLoading, refetch} = useQuery({
         queryKey: ['doctors'],
         queryFn: async() =>{
-            const res = await fetch('http://localhost:3000/doctors', {
+            const res = await fetch('https://quickmed-server-side.onrender.com/doctors', {
               method: 'GET',
               headers: {
                 authorization: `Bearer ${localStorage.getItem('accessToken')}`
@@ -36,7 +36,7 @@ const DoctorsApplication = () => {
     }
 
     const handleDoctorApproval = email => {
-        fetch(`http://localhost:3000/doctor/admin/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/doctor/admin/${email}`, {
             method: 'PUT', 
             headers: {
                 authorization: `bearer ${localStorage.getItem('accessToken')}`
@@ -52,7 +52,7 @@ const DoctorsApplication = () => {
     }
 
     const handleDeleteDoctors = email => {
-        fetch(`http://localhost:3000/doctor/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/doctor/${email}`, {
             method: 'DELETE', 
             headers: {
                 authorization: `bearer ${localStorage.getItem('accessToken')}`

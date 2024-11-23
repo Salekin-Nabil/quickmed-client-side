@@ -28,7 +28,7 @@ const ApplyDoctor = () => {
         };
         console.log(data);
         
-        const url = `http://localhost:3000/doctor/${email}`;
+        const url = `https://quickmed-server-side.onrender.com/doctor/${email}`;
         fetch(url, {
             method: 'PUT',
             headers: {

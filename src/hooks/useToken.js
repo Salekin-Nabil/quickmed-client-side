@@ -8,7 +8,7 @@ const useToken = (user) => {
         const photo = user[0]?.user?.photoURL || "https://graph.facebook.com/1840598326336872/picture";
         const currentUser = {name: name, email: email, photo: photo};
         if (email) {
-            fetch(`http://localhost:3000/user/${email}`,{
+            fetch(`https://quickmed-server-side.onrender.com/user/${email}`,{
                 method: 'PUT',
                 headers: {
                     'content-type': 'application/json'

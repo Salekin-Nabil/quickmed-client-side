@@ -239,7 +239,7 @@ const VideoCall = () => {
         .getTracks()
         .forEach((track) => track.stop());
 
-        const url = `http://localhost:3000/bookings/calls/ended/${appointmentID}`;
+        const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
         fetch(url, {
             method: 'PUT',
             headers: {

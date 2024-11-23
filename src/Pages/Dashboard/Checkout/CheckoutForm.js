@@ -16,7 +16,7 @@ const CheckoutForm = ({ booking }) => {
     const bill = 50;
 
     useEffect(() => {
-        fetch('http://localhost:3000/create-payment-intent', {
+        fetch('https://quickmed-server-side.onrender.com/create-payment-intent', {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
@@ -84,7 +84,7 @@ const CheckoutForm = ({ booking }) => {
                 order: _id,
                 transactionId: paymentIntent.id
             }
-            fetch(`http://localhost:3000/bookings/${_id}`, {
+            fetch(`https://quickmed-server-side.onrender.com/bookings/${_id}`, {
                 method: 'PATCH',
                 headers: {
                     'content-type': 'application/json',

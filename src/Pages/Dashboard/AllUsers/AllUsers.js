@@ -9,7 +9,7 @@ const AllUsers = () => {
     // const {data: users = [], isLoading, refetch} = useQuery({
     //     queryKey: ['users'],
     //     queryFn: async() =>{
-    //         const res = await fetch('http://localhost:3000/users');
+    //         const res = await fetch('https://quickmed-server-side.onrender.com/users');
     //         if(isLoading){
     //           return <Loading></Loading>
     //         }
@@ -20,7 +20,7 @@ const AllUsers = () => {
     const {data: users, isLoading, refetch} = useQuery({
         queryKey: ['users'],
         queryFn: async() =>{
-            const res = await fetch('http://localhost:3000/users', {
+            const res = await fetch('https://quickmed-server-side.onrender.com/users', {
               method: 'GET',
               headers: {
                 authorization: `Bearer ${localStorage.getItem('accessToken')}`
@@ -36,7 +36,7 @@ const AllUsers = () => {
     }
 
     const handleMakeAdmin = email => {
-        fetch(`http://localhost:3000/users/admin/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/admin/${email}`, {
             method: 'PUT', 
             headers: {
                 authorization: `bearer ${localStorage.getItem('accessToken')}`
@@ -52,7 +52,7 @@ const AllUsers = () => {
     }
 
     const handleDeleteUser = email => {
-        fetch(`http://localhost:3000/users/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/users/${email}`, {
             method: 'DELETE', 
             headers: {
                 authorization: `bearer ${localStorage.getItem('accessToken')}`
@@ -62,7 +62,7 @@ const AllUsers = () => {
         .then(data => {
                 refetch();
         })
-        fetch(`http://localhost:3000/bookings/admin/${email}`, {
+        fetch(`https://quickmed-server-side.onrender.com/bookings/admin/${email}`, {
             method: 'DELETE', 
             headers: {
                 authorization: `bearer ${localStorage.getItem('accessToken')}`
