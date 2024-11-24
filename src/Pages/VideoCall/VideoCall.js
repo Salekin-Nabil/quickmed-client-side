@@ -8,9 +8,8 @@ const VideoCall = () => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnection = useRef(null);
-  const localStream = useRef(null); 
-  const { userId, secondUserId } = useParams();
-  const { appointmentID } = useParams();
+  const localStream = useRef(null);
+  const { userId, secondUserId, appointmentID } = useParams();
   const navigate = useNavigate();
 
   const [connectionId, setConnectionId] = useState(null);
@@ -39,9 +38,10 @@ const VideoCall = () => {
   useEffect(() => {
     if (!connectionId || !sessionId) return;
 
-    ws.current = new WebSocket("wss://quick-med.fly.dev/ws/call");
+    ws.current = new WebSocket("ws://localhost:3001/ws/call");
 
     ws.current.onopen = () => {
+      console.log("WebSocket connection opened");
       ws.current.send(
         JSON.stringify({
           type: "init",
@@ -49,10 +49,18 @@ const VideoCall = () => {
           sessionId: sessionId,
         })
       );
+      console.log("Sent init message:", {
+        type: "init",
+        id: connectionId,
+        sessionId: sessionId,
+      });
+
+      setupPeerConnection();
     };
 
     ws.current.onmessage = async (event) => {
       const data = JSON.parse(event.data);
+      console.log("Received message:", data);
 
       switch (data.type) {
         case "offer":
@@ -72,9 +80,13 @@ const VideoCall = () => {
       }
     };
 
-    ws.current.onclose = () => {};
+    ws.current.onclose = () => {
+      console.log("WebSocket closed");
+    };
 
-    ws.current.onerror = (error) => {};
+    ws.current.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
 
     return () => {
       if (ws.current) {
@@ -83,36 +95,54 @@ const VideoCall = () => {
     };
   }, [connectionId, sessionId]);
 
-  useEffect(() => {
-    if (!connectionId || !sessionId) return;
-
+  const setupPeerConnection = () => {
     const pc = new RTCPeerConnection({
-      // iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
       ],
     });
     peerConnection.current = pc;
 
+    const sortedIds = [userId, secondUserId].sort();
+    const isInitiator = connectionId === sortedIds[0];
+
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
-      .then((stream) => {
-        localStream.current = stream; 
+      .then(async (stream) => {
+        console.log("Local stream obtained");
+        localStream.current = stream;
         localVideoRef.current.srcObject = stream;
         stream.getTracks().forEach((track) => {
           pc.addTrack(track, stream);
         });
+
+        if (isInitiator) {
+          try {
+            console.log("Creating offer");
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            ws.current.send(
+              JSON.stringify({
+                type: "offer",
+                sdp: pc.localDescription,
+                id: connectionId,
+                sessionId: sessionId,
+              })
+            );
+            console.log("Sent offer:", pc.localDescription);
+          } catch (err) {
+            console.error("Error creating offer:", err);
+          }
+        }
       })
       .catch((err) => {
+        console.error("Error accessing media devices:", err);
         alert("Couldn't get access to microphone or camera.");
       });
 
     pc.onicecandidate = (event) => {
       if (event.candidate && ws.current) {
+        console.log("Sending ICE candidate:", event.candidate);
         ws.current.send(
           JSON.stringify({
             type: "candidate",
@@ -125,17 +155,20 @@ const VideoCall = () => {
     };
 
     pc.ontrack = (event) => {
+      console.log("Remote track received");
       if (remoteVideoRef.current.srcObject !== event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
 
-    const sortedIds = [userId, secondUserId].sort();
-    const isInitiator = connectionId === sortedIds[0];
+    pc.oniceconnectionstatechange = () => {
+      console.log("ICE connection state changed to", pc.iceConnectionState);
+    };
 
-    if (isInitiator) {
-      pc.addEventListener("negotiationneeded", async () => {
+    if (!isInitiator) {
+      pc.onnegotiationneeded = async () => {
         try {
+          console.log("Negotiation needed");
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.current.send(
@@ -146,41 +179,17 @@ const VideoCall = () => {
               sessionId: sessionId,
             })
           );
-        } catch (err) {}
-      });
+          console.log("Sent offer after negotiation needed:", pc.localDescription);
+        } catch (err) {
+          console.error("Error during negotiation needed:", err);
+        }
+      };
     }
-
-    pc.addEventListener("iceconnectionstatechange", () => {
-      if (pc.iceConnectionState === "failed") {}
-    });
-
-    return () => {
-      if (localVideoRef.current && localVideoRef.current.srcObject) {
-        localVideoRef.current.srcObject
-          .getTracks()
-          .forEach((track) => track.stop());
-      }
-
-      if (peerConnection.current) {
-        peerConnection.current.close();
-        peerConnection.current = null;
-      }
-
-      if (ws.current) {
-        ws.current.send(
-          JSON.stringify({
-            type: "hangup",
-            id: connectionId,
-            sessionId: sessionId,
-          })
-        );
-        ws.current.close();
-      }
-    };
-  }, [connectionId, sessionId]);
+  };
 
   const handleOfferMsg = async (data) => {
     try {
+      console.log("Received offer:", data);
       const desc = new RTCSessionDescription(data.sdp);
       await peerConnection.current.setRemoteDescription(desc);
 
@@ -194,16 +203,20 @@ const VideoCall = () => {
           sessionId: sessionId,
         })
       );
+      console.log("Sent answer:", peerConnection.current.localDescription);
 
       while (iceCandidatesQueue.current.length) {
         const candidate = iceCandidatesQueue.current.shift();
         await peerConnection.current.addIceCandidate(candidate);
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error handling offer:", err);
+    }
   };
 
   const handleAnswerMsg = async (data) => {
     try {
+      console.log("Received answer:", data);
       const desc = new RTCSessionDescription(data.sdp);
       await peerConnection.current.setRemoteDescription(desc);
 
@@ -211,21 +224,27 @@ const VideoCall = () => {
         const candidate = iceCandidatesQueue.current.shift();
         await peerConnection.current.addIceCandidate(candidate);
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error handling answer:", err);
+    }
   };
 
   const handleNewICECandidateMsg = async (data) => {
     try {
+      console.log("Received ICE candidate:", data);
       const candidate = new RTCIceCandidate(data.candidate);
       if (peerConnection.current.remoteDescription) {
         await peerConnection.current.addIceCandidate(candidate);
       } else {
         iceCandidatesQueue.current.push(candidate);
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error adding received ICE candidate:", err);
+    }
   };
 
   const handleHangupMsg = async () => {
+    console.log("Received hangup message");
     if (peerConnection.current) {
       peerConnection.current.close();
       peerConnection.current = null;
@@ -239,16 +258,16 @@ const VideoCall = () => {
         .getTracks()
         .forEach((track) => track.stop());
 
-        const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
-        fetch(url, {
-            method: 'PUT',
-            headers: {
-                'content-type': 'application/json'
-            },
-        })
-        .then(res=> res.json())
-        .then(result =>{
-            console.log(result);
+      const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
+      fetch(url, {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+        },
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          console.log(result);
         });
     }
 
