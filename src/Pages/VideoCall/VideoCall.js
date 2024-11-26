@@ -431,73 +431,74 @@ const VideoCall = () => {
   }, [isAudioEnabled]);
 
   return (
-    <div className="flex flex-row">
-      <div className="relative flex items-center justify-center h-[80vh] w-full bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
+  <div className="flex flex-row h-full">
+    <div className="relative flex items-center justify-center flex-1 bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover shadow-lg"
+      />
+
+      <div className="absolute bottom-6 right-6 w-32 h-24 md:w-40 md:h-28 lg:w-48 lg:h-32 border-2 border-gray-700 shadow-lg rounded-lg overflow-hidden">
         <video
-          ref={remoteVideoRef}
+          ref={localVideoRef}
           autoPlay
           playsInline
-          className="absolute inset-0 w-full h-full object-cover shadow-lg"
+          muted
+          className="w-full h-full object-cover"
         />
-
-        <div className="absolute bottom-6 right-6 w-32 h-24 md:w-40 md:h-28 lg:w-48 lg:h-32 border-2 border-gray-700 shadow-lg rounded-lg overflow-hidden">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        <div className="absolute bottom-6 flex gap-4 justify-center w-full">
-          <button
-            className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
-            onClick={toggleVideo}
-          >
-            <i
-              className={`fas ${
-                isVideoEnabled ? "fa-video" : "fa-video-slash"
-              } text-white`}
-            ></i>
-          </button>
-          <button
-            className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
-            onClick={toggleAudio}
-          >
-            <i
-              className={`fas ${
-                isAudioEnabled ? "fa-microphone" : "fa-microphone-slash"
-              } text-white`}
-            ></i>
-          </button>
-          <button
-            className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition"
-            onClick={endCall}
-          >
-            <i className="fas fa-phone-slash text-white"></i>
-          </button>
-        </div>
       </div>
-      <div className="flex flex-col w-56 bg-gray-900 text-white overflow-y-auto">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className="flex flex-row bg-gray-700 m-2 p-2 rounded"
-          >
-            <div
-              className={`${
-                message.sender === "local" ? "bg-blue-500" : "bg-green-500"
-              } w-[4px] max-w-[4px] min-w-[4px]`}
-            ></div>
-            <div className="text-xs px-4 py-1 font-semibold">
-              {message.text}
-            </div>
-          </div>
-        ))}
+
+      <div className="absolute bottom-6 flex gap-4 justify-center w-full">
+        <button
+          className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+          onClick={toggleVideo}
+        >
+          <i
+            className={`fas ${
+              isVideoEnabled ? "fa-video" : "fa-video-slash"
+            } text-white`}
+          ></i>
+        </button>
+        <button
+          className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+          onClick={toggleAudio}
+        >
+          <i
+            className={`fas ${
+              isAudioEnabled ? "fa-microphone" : "fa-microphone-slash"
+            } text-white`}
+          ></i>
+        </button>
+        <button
+          className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition"
+          onClick={endCall}
+        >
+          <i className="fas fa-phone-slash text-white"></i>
+        </button>
       </div>
     </div>
-  );
+    <div className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto">
+      {messages.map((message, index) => (
+        <div
+          key={index}
+          className="flex flex-row bg-gray-700 m-2 p-2 rounded"
+        >
+          <div
+            className={`${
+              message.sender === "local" ? "bg-blue-500" : "bg-green-500"
+            } w-[4px] max-w-[4px] min-w-[4px]`}
+          ></div>
+          <div className="text-xs px-4 py-1 font-semibold">
+            {message.text}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 };
 
 export default VideoCall;
