@@ -489,7 +489,7 @@ const VideoCall = () => {
     </div>
     <div
       ref={messageContainerRef}
-      className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto h-80"
+      className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto"
     >
       {messages.map((message, index) => (
         <div
