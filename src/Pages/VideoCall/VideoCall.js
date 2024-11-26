@@ -18,6 +18,8 @@ const VideoCall = () => {
   const ws = useRef(null);
   const iceCandidatesQueue = useRef([]);
 
+  const messageContainerRef = useRef(null)
+
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
@@ -37,6 +39,12 @@ const VideoCall = () => {
       setSessionId(session);
     }
   }, [userId, secondUserId]);
+
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (!connectionId || !sessionId) return;
@@ -480,14 +488,13 @@ const VideoCall = () => {
       </div>
     </div>
     <div
-      className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto"
-      style={{ transform: "rotate(180deg)" }}
+      ref={messageContainerRef}
+      className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto h-80"
     >
       {messages.map((message, index) => (
         <div
           key={index}
           className="flex flex-row bg-gray-700 m-2 p-2 rounded"
-          style={{ transform: "rotate(180deg)" }} 
         >
           <div
             className={`${
