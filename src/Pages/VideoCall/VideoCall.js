@@ -262,6 +262,18 @@ const VideoCall = () => {
   const endCall = () => {
     stopSpeechRecognition();
 
+    const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
+      fetch(url, {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+        },
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          console.log(result);
+        });
+
     if (localStream.current) {
       localStream.current.getTracks().forEach((track) => track.stop());
       localStream.current = null;
