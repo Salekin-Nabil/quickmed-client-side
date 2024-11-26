@@ -21,8 +21,7 @@ const VideoCall = () => {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
-  const [localTranscript, setLocalTranscript] = useState("");
-  const [remoteTranscript, setRemoteTranscript] = useState("");
+  const [messages, setMessages] = useState([]);
   const recognitionRef = useRef(null);
 
   useEffect(() => {
@@ -251,7 +250,10 @@ const VideoCall = () => {
 
   const handleTranscriptionMsg = (data) => {
     console.log("Received transcription:", data.text);
-    setRemoteTranscript(data.text);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { sender: "remote", text: data.text },
+    ]);
   };
 
   const handleHangupMsg = async () => {
@@ -263,16 +265,16 @@ const VideoCall = () => {
     stopSpeechRecognition();
 
     const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
-      fetch(url, {
-        method: 'PUT',
-        headers: {
-          'content-type': 'application/json',
-        },
-      })
-        .then((res) => res.json())
-        .then((result) => {
-          console.log(result);
-        });
+    fetch(url, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        console.log(result);
+      });
 
     if (localStream.current) {
       localStream.current.getTracks().forEach((track) => track.stop());
@@ -280,7 +282,9 @@ const VideoCall = () => {
     }
 
     if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
-      remoteVideoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      remoteVideoRef.current.srcObject
+        .getTracks()
+        .forEach((track) => track.stop());
       remoteVideoRef.current.srcObject = null;
     }
 
@@ -308,8 +312,7 @@ const VideoCall = () => {
       remoteVideoRef.current.srcObject = null;
     }
 
-    setLocalTranscript("");
-    setRemoteTranscript("");
+    setMessages([]);
 
     navigate("/");
   };
@@ -350,7 +353,7 @@ const VideoCall = () => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-US"; 
+    recognition.lang = "en-US";
     recognition.continuous = true;
     recognition.interimResults = true;
 
@@ -366,17 +369,22 @@ const VideoCall = () => {
         }
       }
 
-      setLocalTranscript(finalTranscript || interimTranscript);
+      if (finalTranscript) {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: "local", text: finalTranscript },
+        ]);
 
-      if (ws.current && finalTranscript) {
-        ws.current.send(
-          JSON.stringify({
-            type: "transcription",
-            text: finalTranscript,
-            id: connectionId,
-            sessionId: sessionId,
-          })
-        );
+        if (ws.current) {
+          ws.current.send(
+            JSON.stringify({
+              type: "transcription",
+              text: finalTranscript,
+              id: connectionId,
+              sessionId: sessionId,
+            })
+          );
+        }
       }
     };
 
@@ -408,7 +416,6 @@ const VideoCall = () => {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
-    setLocalTranscript("");
   };
 
   useEffect(() => {
@@ -473,22 +480,21 @@ const VideoCall = () => {
         </div>
       </div>
       <div className="flex flex-col w-56 bg-gray-900 text-white overflow-y-auto">
-        {localTranscript && (
-          <div className="flex flex-row bg-gray-700 m-2 p-2 rounded">
-            <div className="bg-blue-500 w-2"></div>
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className="flex flex-row bg-gray-700 m-2 p-2 rounded"
+          >
+            <div
+              className={`${
+                message.sender === "local" ? "bg-blue-500" : "bg-green-500"
+              } w-[4px] max-w-[4px] min-w-[4px]`}
+            ></div>
             <div className="text-xs px-4 py-1 font-semibold">
-              {localTranscript}
+              {message.text}
             </div>
           </div>
-        )}
-        {remoteTranscript && (
-          <div className="flex flex-row bg-gray-700 m-2 p-2 rounded">
-            <div className="bg-green-500 w-2"></div>
-            <div className="text-xs px-4 py-1 font-semibold">
-              {remoteTranscript}
-            </div>
-          </div>
-        )}
+        ))}
       </div>
     </div>
   );
