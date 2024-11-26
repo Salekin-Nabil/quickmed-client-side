@@ -431,7 +431,7 @@ const VideoCall = () => {
   }, [isAudioEnabled]);
 
   return (
-  <div className="flex flex-row h-screen max-h-screen">
+  <div className="flex flex-row h-[80vh] max-h-[80vh]">
     <div className="relative flex items-center justify-center flex-1 bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
       <video
         ref={remoteVideoRef}
@@ -479,20 +479,22 @@ const VideoCall = () => {
         </button>
       </div>
     </div>
-    <div className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto">
+    <div
+      className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto"
+      style={{ transform: "rotate(180deg)" }}
+    >
       {messages.map((message, index) => (
         <div
           key={index}
           className="flex flex-row bg-gray-700 m-2 p-2 rounded"
+          style={{ transform: "rotate(180deg)" }} 
         >
           <div
             className={`${
               message.sender === "local" ? "bg-blue-500" : "bg-green-500"
             } w-[4px] max-w-[4px] min-w-[4px]`}
           ></div>
-          <div className="text-xs px-4 py-1 font-semibold">
-            {message.text}
-          </div>
+          <div className="text-xs px-4 py-1 font-semibold">{message.text}</div>
         </div>
       ))}
     </div>
