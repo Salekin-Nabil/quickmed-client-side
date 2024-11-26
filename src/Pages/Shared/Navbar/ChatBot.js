@@ -67,7 +67,7 @@ const ChatBot = () => {
               key={index}
               className={`p-2 rounded-md ${
                 msg.sender === "user"
-                  ? "bg-blue-500 text-white text-right"
+                  ? "bg-[#81c481f1] text-white text-right"
                   : "bg-gray-200 text-black text-left"
               }`}
             >
@@ -87,16 +87,16 @@ const ChatBot = () => {
             onKeyDown={handleKeyDown}
           />
           <button
-            className="text-black rounded-lg p-2 focus:outline-none border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+            className="text-black rounded-lg p-2 focus:outline-none border border-[#5aa15af1] hover:bg-[#3c693cf1] disabled:opacity-50"
             onClick={handleSendMessage}
             disabled={isSending}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
+              fill="#81c481f1"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
-              stroke="currentColor"
+              stroke="#3c693cf1"
               className="w-6 h-6"
             >
               <path
@@ -110,7 +110,7 @@ const ChatBot = () => {
       </div>
       <TERipple rippleColor="light">
         <button
-          className="fixed bottom-[40px] right-[40px] p-2 bg-[#dbeeeb] text-white font-medium text-xs leading-tight uppercase rounded-full shadow-md hover:bg-[#8cccc2] hover:shadow-lg focus:bg-cyan-050 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-cyan-700 active:shadow-lg transition duration-150 ease-in-out"
+          className="fixed bottom-[40px] right-[40px] p-2 bg-[#cbe2c7] text-white font-medium text-xs leading-tight uppercase rounded-full shadow-md hover:bg-[#71a869] hover:shadow-lg focus:bg-cyan-050 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-[#5b884d] active:shadow-lg transition duration-150 ease-in-out"
           onClick={() => setShowChat(!showChat)}
         >
           <img className="w-[70px]" src={Chatbot} alt="Chatbot" />

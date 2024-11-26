@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { BodyComponent } from '../../components/BodyComponent/BodyComponent';
+import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import auth from "../../firebase.init";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 const Banner = () => {
     const [selectedParts, setSelectedParts] = useState([]);
+    const [user] = useAuthState(auth);
 
-    // const sendMessageToBackend = async (message) => {
-    //     try {
-    //       const response = await axios.post("https://quick-med.fly.dev/message", {
-    //         message: message,
-    //         user_id: user.uid,
-    //       });
-    //       return response.data.message;
-    //     } catch (error) {
-    //       return "Failed to get response";
-    //     }
-    //   };
+    const sendMessageToBackend = async (message) => {
+        try {
+          const response = await axios.post("https://quick-med.fly.dev/message", {
+            message: message,
+            user_id: user.uid,
+          });
+          return response.data.message;
+        } catch (error) {
+          return "Failed to get response";
+        }
+      };
 
     // Mapping for body parts with medical terms and accurate positions
     const partToDetailsMapping = {
@@ -26,7 +31,7 @@ const Banner = () => {
         left_shoulder: {
             terms: ['Orthopedics'],
             bodyPosition: { x: '46.7%', y: '19%' },
-            boxPosition: { x: '32%', y: '-10%' },
+            boxPosition: { x: '0%', y: '-10%' },
         },
         right_shoulder: {
             terms: ['Orthopedics'],
@@ -56,12 +61,12 @@ const Banner = () => {
         chest: {
             terms: ['Cardiology'],
             bodyPosition: { x: '47.7%', y: '25%' },
-            boxPosition: { x: '27%', y: '0%' },
+            boxPosition: { x: '5%', y: '0%' },
         },
         stomach: {
             terms: ['Gastroenterology'],
             bodyPosition: { x: '50%', y: '42%' },
-            boxPosition: { x: '35%', y: '9.3%' },
+            boxPosition: { x: '23%', y: '9.3%' },
         },
         left_leg_upper: {
             terms: ['Orthopedics'],
@@ -86,16 +91,16 @@ const Banner = () => {
         left_foot: {
             terms: ['Orthopedics'],
             bodyPosition: { x: '48.8%', y: '96%' },
-            boxPosition: { x: '32%', y: '73%' },
+            boxPosition: { x: '32%', y: '53%' },
         },
         right_foot: {
             terms: ['Orthopedics'],
             bodyPosition: { x: '51.3%', y: '96%' },
-            boxPosition: { x: '60%', y: '73%' },
+            boxPosition: { x: '60%', y: '53%' },
         },
     };
 
-    const handlePartClick = (id) => {
+    const handlePartClick = async (id) => {
         if (!partToDetailsMapping[id]) return;
 
         const isAlreadySelected = selectedParts.some((part) => part.id === id);
@@ -105,9 +110,13 @@ const Banner = () => {
             setSelectedParts((prev) => prev.filter((part) => part.id !== id));
         } else {
             // Add the clicked part
+            const botResponse = await sendMessageToBackend(
+                `I am having discomfort in my ${id}. What should I do? Do you have any suggestion for initial recovery for now that I can do while staying at home? You can also suggest me some medicines, please.`
+            );
+    
             setSelectedParts((prev) => [
                 ...prev,
-                { id, ...partToDetailsMapping[id] },
+                { id, ...partToDetailsMapping[id], botResponse }, // Include botResponse
             ]);
         }
     };
@@ -158,18 +167,21 @@ const Banner = () => {
                         className="absolute bg-[#99b999] border-[#497c49] border-8 rounded-md shadow-md p-2 text-md font-bold text-[#294629] hover:cursor-pointer"
                         style={{
                             position: 'absolute',
+                            width: '20%',
                             top: `calc(${part.boxPosition.y} + ${index * 5}px)`, // Adjust for stacked boxes
                             left: part.boxPosition.x,
                         }}
                     >
                         {part.terms.map((term, i) => (
-                            <div key={i}>{term}</div>
-                        ))}
+                <div key={i}>{term}</div>
+            ))}
+            <div className="mt-2 text-sm font-normal text-[#294629]">
+            <ReactMarkdown>{part.botResponse}</ReactMarkdown> {/* Render botResponse */}
+            </div>
                     </div>
                 </div>
                 
             ))}
-            
         </div>
     );
 };
