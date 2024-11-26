@@ -1,3 +1,5 @@
+// VideoCall.jsx
+
 import React, { useEffect, useRef, useState } from "react";
 import auth from "../../firebase.init";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -21,6 +23,10 @@ const VideoCall = () => {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
+  const [localTranscript, setLocalTranscript] = useState("");
+  const [remoteTranscript, setRemoteTranscript] = useState("");
+  const recognitionRef = useRef(null);
+
   useEffect(() => {
     if (user) {
       setConnectionId(user.uid);
@@ -38,7 +44,7 @@ const VideoCall = () => {
   useEffect(() => {
     if (!connectionId || !sessionId) return;
 
-    ws.current = new WebSocket("wss://quick-med.fly.dev/ws/call");
+    ws.current = new WebSocket("ws://localhost:3001/ws/call");
 
     ws.current.onopen = () => {
       console.log("WebSocket connection opened");
@@ -75,6 +81,9 @@ const VideoCall = () => {
         case "hangup":
           await handleHangupMsg();
           break;
+        case "transcription":
+          handleTranscriptionMsg(data);
+          break;
         default:
           break;
       }
@@ -89,17 +98,13 @@ const VideoCall = () => {
     };
 
     return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
+      endCall();
     };
   }, [connectionId, sessionId]);
 
   const setupPeerConnection = () => {
     const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-      ],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
     peerConnection.current = pc;
 
@@ -179,7 +184,10 @@ const VideoCall = () => {
               sessionId: sessionId,
             })
           );
-          console.log("Sent offer after negotiation needed:", pc.localDescription);
+          console.log(
+            "Sent offer after negotiation needed:",
+            pc.localDescription
+          );
         } catch (err) {
           console.error("Error during negotiation needed:", err);
         }
@@ -243,32 +251,27 @@ const VideoCall = () => {
     }
   };
 
-  const handleHangupMsg = async () => {
-    console.log("Received hangup message");
-    if (peerConnection.current) {
-      peerConnection.current.close();
-      peerConnection.current = null;
-    }
-    navigate("/");
+  const handleTranscriptionMsg = (data) => {
+    console.log("Received transcription:", data.text);
+    setRemoteTranscript(data.text);
   };
 
-  const endCall = async () => {
-    if (localVideoRef.current && localVideoRef.current.srcObject) {
-      localVideoRef.current.srcObject
-        .getTracks()
-        .forEach((track) => track.stop());
+  const handleHangupMsg = async () => {
+    console.log("Received hangup message");
+    endCall();
+  };
 
-      const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
-      fetch(url, {
-        method: 'PUT',
-        headers: {
-          'content-type': 'application/json',
-        },
-      })
-        .then((res) => res.json())
-        .then((result) => {
-          console.log(result);
-        });
+  const endCall = () => {
+    stopSpeechRecognition();
+
+    if (localStream.current) {
+      localStream.current.getTracks().forEach((track) => track.stop());
+      localStream.current = null;
+    }
+
+    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+      remoteVideoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      remoteVideoRef.current.srcObject = null;
     }
 
     if (peerConnection.current) {
@@ -285,27 +288,130 @@ const VideoCall = () => {
         })
       );
       ws.current.close();
+      ws.current = null;
     }
+
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+
+    setLocalTranscript("");
+    setRemoteTranscript("");
+
     navigate("/");
   };
 
   const toggleVideo = () => {
     if (localStream.current) {
-      localStream.current.getVideoTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-        setIsVideoEnabled(track.enabled);
-      });
+      const videoTracks = localStream.current.getVideoTracks();
+      if (videoTracks.length > 0) {
+        videoTracks[0].enabled = !videoTracks[0].enabled;
+        setIsVideoEnabled(videoTracks[0].enabled);
+      }
     }
   };
 
   const toggleAudio = () => {
     if (localStream.current) {
-      localStream.current.getAudioTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-        setIsAudioEnabled(track.enabled);
-      });
+      const audioTracks = localStream.current.getAudioTracks();
+      if (audioTracks.length > 0) {
+        audioTracks[0].enabled = !audioTracks[0].enabled;
+        setIsAudioEnabled(audioTracks[0].enabled);
+
+        if (audioTracks[0].enabled) {
+          startSpeechRecognition();
+        } else {
+          stopSpeechRecognition();
+        }
+      }
     }
   };
+
+  const startSpeechRecognition = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.error("Speech Recognition API not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US"; 
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+      let finalTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      setLocalTranscript(finalTranscript || interimTranscript);
+
+      if (ws.current && finalTranscript) {
+        ws.current.send(
+          JSON.stringify({
+            type: "transcription",
+            text: finalTranscript,
+            id: connectionId,
+            sessionId: sessionId,
+          })
+        );
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech Recognition error:", event.error);
+      if (
+        event.error === "not-allowed" ||
+        event.error === "service-not-allowed"
+      ) {
+        stopSpeechRecognition();
+      }
+    };
+
+    recognition.onend = () => {
+      if (isAudioEnabled && recognitionRef.current) {
+        recognitionRef.current.start();
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setLocalTranscript("");
+  };
+
+  useEffect(() => {
+    if (isAudioEnabled) {
+      startSpeechRecognition();
+    } else {
+      stopSpeechRecognition();
+    }
+
+    return () => {
+      stopSpeechRecognition();
+    };
+  }, [isAudioEnabled]);
 
   return (
     <div className="flex flex-row">
@@ -356,13 +462,23 @@ const VideoCall = () => {
           </button>
         </div>
       </div>
-      <div className="flex flex-col w-56 bg-gray-900 text-white">
-          <div className="flex flex-row bg-gray-700">
-              <div className=" bg-blue-500 w-2"></div>
-              <div className="text-xs p-4 font-semibold">
-                This text is what I am telling you in the video
-              </div>
+      <div className="flex flex-col w-56 bg-gray-900 text-white overflow-y-auto">
+        {localTranscript && (
+          <div className="flex flex-row bg-gray-700 m-2 p-2 rounded">
+            <div className="bg-blue-500 w-2"></div>
+            <div className="text-xs px-4 py-1 font-semibold">
+              {localTranscript}
+            </div>
           </div>
+        )}
+        {remoteTranscript && (
+          <div className="flex flex-row bg-gray-700 m-2 p-2 rounded">
+            <div className="bg-green-500 w-2"></div>
+            <div className="text-xs px-4 py-1 font-semibold">
+              {remoteTranscript}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
