@@ -431,7 +431,7 @@ const VideoCall = () => {
   }, [isAudioEnabled]);
 
   return (
-  <div className="flex flex-row h-full">
+  <div className="flex flex-row h-screen max-h-screen">
     <div className="relative flex items-center justify-center flex-1 bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
       <video
         ref={remoteVideoRef}
