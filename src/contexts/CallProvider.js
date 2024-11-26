@@ -25,6 +25,7 @@ export const CallProvider = ({ children }) => {
         if (!user) return;
 
         const ws = new WebSocket(`wss://quick-med.fly.dev/ws?user_id=${data._id}`);
+        console.log("Web Socket: ", ws);
         setSocket(ws);
 
         ws.onmessage = (event) => {

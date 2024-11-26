@@ -191,6 +191,7 @@ const DoctorAppointment = () => {
         .then(res => res.json())
         .then(data => {
             setUserID(data); // Set the user ID here
+            console.log(data._id);
             
             // Now that userID is set, initiate the call here
             initiateCall(doctor, data._id, appointmentID);

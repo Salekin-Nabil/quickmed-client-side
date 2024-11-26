@@ -1,36 +1,175 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BodyComponent } from '../../components/BodyComponent/BodyComponent';
 
 const Banner = () => {
-    const handlePartClick = (id) => {
-        console.log(`part with id pressed ${id}`);
+    const [selectedParts, setSelectedParts] = useState([]);
+
+    // const sendMessageToBackend = async (message) => {
+    //     try {
+    //       const response = await axios.post("https://quick-med.fly.dev/message", {
+    //         message: message,
+    //         user_id: user.uid,
+    //       });
+    //       return response.data.message;
+    //     } catch (error) {
+    //       return "Failed to get response";
+    //     }
+    //   };
+
+    // Mapping for body parts with medical terms and accurate positions
+    const partToDetailsMapping = {
+        head: {
+            terms: ['Neurology', 'Psychiatry'],
+            bodyPosition: { x: '51%', y: '2%' }, // Position on the anatomy
+            boxPosition: { x: '60%', y: '0%' }, // Position for the box
+        },
+        left_shoulder: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '46.7%', y: '19%' },
+            boxPosition: { x: '32%', y: '-10%' },
+        },
+        right_shoulder: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '53.5%', y: '20%' },
+            boxPosition: { x: '65%', y: '11%' },
+        },
+        left_arm: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '45.6%', y: '40%' },
+            boxPosition: { x: '23%', y: '10%' },
+        },
+        right_arm: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '54.5%', y: '40%' },
+            boxPosition: { x: '70%', y: '21%' },
+        },
+        left_hand: {
+            terms: ['Dermatology'],
+            bodyPosition: { x: '44.4%', y: '50%' },
+            boxPosition: { x: '18%', y: '24%' },
+        },
+        right_hand: {
+            terms: ['Dermatology'],
+            bodyPosition: { x: '55.6%', y: '50%' },
+            boxPosition: { x: '75%', y: '28%' },
+        },
+        chest: {
+            terms: ['Cardiology'],
+            bodyPosition: { x: '47.7%', y: '25%' },
+            boxPosition: { x: '27%', y: '0%' },
+        },
+        stomach: {
+            terms: ['Gastroenterology'],
+            bodyPosition: { x: '50%', y: '42%' },
+            boxPosition: { x: '35%', y: '9.3%' },
+        },
+        left_leg_upper: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '47.8%', y: '60%' },
+            boxPosition: { x: '23%', y: '41%' },
+        },
+        right_leg_upper: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '52.3%', y: '60%' },
+            boxPosition: { x: '70%', y: '48%' },
+        },
+        left_leg_lower: {
+            terms: ['Rheumatology'],
+            bodyPosition: { x: '48.2%', y: '72%' },
+            boxPosition: { x: '27%', y: '55%' },
+        },
+        right_leg_lower: {
+            terms: ['Rheumatology'],
+            bodyPosition: { x: '51.9%', y: '72%' },
+            boxPosition: { x: '65%', y: '55%' },
+        },
+        left_foot: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '48.8%', y: '96%' },
+            boxPosition: { x: '32%', y: '73%' },
+        },
+        right_foot: {
+            terms: ['Orthopedics'],
+            bodyPosition: { x: '51.3%', y: '96%' },
+            boxPosition: { x: '60%', y: '73%' },
+        },
     };
+
+    const handlePartClick = (id) => {
+        if (!partToDetailsMapping[id]) return;
+
+        const isAlreadySelected = selectedParts.some((part) => part.id === id);
+
+        if (isAlreadySelected) {
+            // Remove the part if it's already selected
+            setSelectedParts((prev) => prev.filter((part) => part.id !== id));
+        } else {
+            // Add the clicked part
+            setSelectedParts((prev) => [
+                ...prev,
+                { id, ...partToDetailsMapping[id] },
+            ]);
+        }
+    };
+
     return (
-        <div className='mb-12 flex flex-col'>
+        <div className="relative w-full h-full my-10">
+            {/* Body Component */}
             <BodyComponent
                 onClick={handlePartClick}
                 partsInput={{
                     head: { show: true },
                     leftShoulder: { show: true },
                     rightShoulder: { show: true },
-                    leftArm: { show: true },
-                    rightArm: { show: true },
                     chest: { show: true },
                     stomach: { show: true },
                     leftLeg: { show: true },
                     rightLeg: { show: true },
-                    leftHand: { show: true },
-                    rightHand: { show: true },
                     leftFoot: { show: true },
                     rightFoot: { show: true },
                 }}
-                mode={"default"}
+                mode="default"
             />
-            <div className='flex items-center justify-center'>
-                <h2 className='text-lg font-semibold text-gray-800 text-center'>
-                    Pick the area of your body experiencing discomfort.
-                </h2>
-            </div>
+            {/* Render Boxes and Lines */}
+            {selectedParts.map((part, index) => (
+                <div key={part.id}>
+                    {/* Line Connecting Body Part to Box */}
+                    <svg
+                        className="absolute pointer-events-none"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                        }}
+                    >
+                        <line
+                            x1={part.bodyPosition.x}
+                            y1={part.bodyPosition.y}
+                            x2={part.boxPosition.x}
+                            y2={`calc(${part.boxPosition.y} + ${index * 5}px)`} // Space between boxes
+                            stroke="black"
+                            strokeWidth="2"
+                        />
+                    </svg>
+                    {/* Annotation Box */}
+                    <div
+                        className="absolute bg-[#99b999] border-[#497c49] border-8 rounded-md shadow-md p-2 text-md font-bold text-[#294629] hover:cursor-pointer"
+                        style={{
+                            position: 'absolute',
+                            top: `calc(${part.boxPosition.y} + ${index * 5}px)`, // Adjust for stacked boxes
+                            left: part.boxPosition.x,
+                        }}
+                    >
+                        {part.terms.map((term, i) => (
+                            <div key={i}>{term}</div>
+                        ))}
+                    </div>
+                </div>
+                
+            ))}
+            
         </div>
     );
 };

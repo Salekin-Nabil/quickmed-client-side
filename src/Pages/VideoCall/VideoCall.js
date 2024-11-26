@@ -38,7 +38,7 @@ const VideoCall = () => {
   useEffect(() => {
     if (!connectionId || !sessionId) return;
 
-    ws.current = new WebSocket("ws://localhost:3001/ws/call");
+    ws.current = new WebSocket("wss://quick-med.fly.dev/ws/call");
 
     ws.current.onopen = () => {
       console.log("WebSocket connection opened");
