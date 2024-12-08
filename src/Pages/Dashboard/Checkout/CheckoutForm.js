@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import Loading from '../../Loading/Loading';
-import { toast } from 'react-toastify';
+import toast, { Toaster } from 'react-hot-toast';
 
 const CheckoutForm = ({ booking }) => {
     const stripe = useStripe();
@@ -46,7 +46,7 @@ const CheckoutForm = ({ booking }) => {
             return;
         }
 
-        const { error, paymentMethod } = await stripe.createPaymentMethod({
+        const { error } = await stripe.createPaymentMethod({
             type: 'card',
             card
         });
@@ -94,7 +94,7 @@ const CheckoutForm = ({ booking }) => {
             }).then(res=>res.json())
             .then(data => {
                 setProcessing(false);
-                toast("Your transaction has been completed.");
+                toast.success("Your transaction has been completed.");
             })
 
         }
@@ -137,6 +137,7 @@ const CheckoutForm = ({ booking }) => {
                     <p>Your transaction Id: <span className="text-orange-700 text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary font-bold">{transactionId}</span> </p>
                 </div>
             }
+            <Toaster/>
         </>
     );
 };

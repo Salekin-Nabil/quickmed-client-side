@@ -6,16 +6,39 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { Helmet } from 'react-helmet';
-import { faTrashCan, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { faTrashCan, faCreditCard, faMagnifyingGlass, faListUl } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { Link } from 'react-router-dom';
 // import { AuthContext } from '../../../contexts/AuthProvider';
+import Web3 from 'web3';
+import paymentEscrowABI from '../SmartContracts/ABI/paymentEscrowABI';
+import paymentEscrowAddress from '../SmartContracts/ContractAddress/paymentEscrowAddress';
 
 const MyAppointment = () => {
     // const { user } = useContext(AuthContext);
     const [appointments, setAppoinments] = useState([]);
-    const [user, loading, error] = useAuthState(auth);
+    const [user] = useAuthState(auth);
     const navigate = useNavigate();
+
+    const [web3, setWeb3] = useState(null);
+    const [paymentEscrow, setPaymentEscrow] = useState(null);
+    const [change, setChange] = useState(null);
+
+
+    useEffect(() => {
+        if (typeof window.ethereum !== 'undefined') {
+          const web3Instance = new Web3(window.ethereum);
+          setWeb3(web3Instance);
+    
+          window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+          const contractInstance = new web3Instance.eth.Contract(paymentEscrowABI, paymentEscrowAddress);
+          setPaymentEscrow(contractInstance);
+          console.log('Web3 initialized and contract loaded:', contractInstance);
+        } else {
+          console.error('MetaMask not detected. Please install MetaMask!');
+        }
+      }, []);
 
     const url = `https://quickmed-server-side.onrender.com/bookings?email=${user?.email}`;
 
@@ -35,10 +58,11 @@ const MyAppointment = () => {
                 }
                 return res.json()})
             .then(data => {
-                setAppoinments(data)
+                console.log("Change: ", change);
+                setAppoinments(data);
             });
         }
-    }, [user]);
+    }, [user, change]);
 
     const handleDeleteBooking = id => {
         fetch(`https://quickmed-server-side.onrender.com/bookings/${id}`, {
@@ -67,7 +91,53 @@ const MyAppointment = () => {
             });
             toast.success('Booking cancelled successfully.');
         })
-    }
+    };
+
+    const handleRefund = async (id, transactionId) =>{
+    
+        if (!web3 || !paymentEscrow) {
+            console.error('Web3 or contract is not initialized');
+            return;
+        }
+
+        
+        try {
+            // Fetch accounts
+            const accounts = await web3.eth.getAccounts();
+            const acc = accounts[0];
+
+            const transaction = await paymentEscrow.methods
+                .refundPayment(transactionId)
+                .send({ from: acc });
+    
+            console.log('Transaction successful:', transaction);
+
+            fetch(`https://quickmed-server-side.onrender.com/bookings/crypto/refund/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    authorization: `bearer ${localStorage.getItem('accessToken')}`
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                setChange(data);
+                toast.success('Payment Refunded Successfully.');
+            })
+
+            fetch(`https://quickmed-server-side.onrender.com/bookings/crypto/refund/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'content-type': 'application/json',
+                    'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                }
+            }).then(res=>res.json())
+            .then(data => {
+                console.log("Transaction Data: ", data);
+            });
+        } catch (err) {
+            console.error('Error during transaction:', err);
+        }
+    };
 
     return (
         <div className='mb-[60px] mx-[20px]'>
@@ -110,6 +180,12 @@ const MyAppointment = () => {
                                             Pending
                                         </td>
                                         }
+                                        {/* {
+                                            appointment?.crypto==="yes" && 
+                                            <td className="text-center text-[goldenrod] font-bold px-6 py-4 whitespace-nowrap">
+                                            Pending
+                                        </td>
+                                        } */}
                                         {
                                             appointment.status==="accepted" && 
                                             <td className="text-center text-[purple] font-bold px-6 py-4 whitespace-nowrap">
@@ -128,21 +204,46 @@ const MyAppointment = () => {
                                             Completed
                                         </td>
                                         }
-                                {
-                                    appointment.status==="unpaid" ?
+                                    {
+                                    appointment.status==="unpaid" &&
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='text-sm rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]'>Pay ------- <FontAwesomeIcon className='text-white' icon={faCreditCard} bounce></FontAwesomeIcon></button>
+                                    <button onClick={()=>navigate(`/dashboard/payment/${appointment._id}`)} className='rounded-md bg-[green] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black] text-bold'>Pay ------- <FontAwesomeIcon className='text-white' icon={faCreditCard} bounce></FontAwesomeIcon></button>
                                     </td>
-                                    :
+
+                                    }
+                                    {
+                                    appointment.status==="completed" &&
+                                    <td className="text-center text-white px-6 py-4 whitespace-nowrap">
+                                    <button onClick={()=>navigate(`/dashboard/my_reviews`)} className='rounded-md bg-[#da792a] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black] text-bold'>Review ------- <FontAwesomeIcon className='text-white' icon={faMagnifyingGlass} beatFade></FontAwesomeIcon></button>
+                                    </td>
+
+                                    }
+                                    {
+                                        (appointment?.crypto==="yes" && appointment.status==="pending") &&
+                                        <td className="text-center text-white px-6 py-4 whitespace-nowrap">
+                                            <button onClick={()=>handleRefund(appointment._id, appointment.transactionId)} className='text-sm rounded-md bg-[#ce9224] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black]' disabled={!web3 || !paymentEscrow}>Refund ------- <FontAwesomeIcon className='text-white' icon={faCreditCard} bounce></FontAwesomeIcon></button>
+                                        </td>
+                                    }
+                                    {
+                                        (!appointment?.crypto && appointment.status==="pending") &&
                                     <td className="text-lg text-white font-semibold px-6 py-4 whitespace-nowrap text-center">
                                         <span className='rounded-lg text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary text-sm font-bold py-3 px-4 border-0 shadow shadow-[black]'>Paid:  {appointment.transactionId}</span>
                                     </td>
-                                }
+                                    }
                                 {/* <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel</button></td> */}
                                 {
-                                            appointment.status==="unpaid" ?
+                                            appointment.status==="unpaid" &&
                                             <td className='text-center py-5'><button onClick={() => handleDeleteBooking(appointment._id)} className='btn btn-xs btn-danger text-white bg-[red] border-0 shadow shadow-[black]'>Cancel... <FontAwesomeIcon className='text-white' icon={faTrashCan} fade></FontAwesomeIcon></button></td>
-                                        :
+                                }
+                                {
+                                    appointment.status==="completed" &&
+                                    <td className="text-center text-white px-6 py-4 whitespace-nowrap">
+                                    <button onClick={()=>navigate(`#`)} className='rounded-md bg-[#528b1c] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black] text-bold'>Consultation Summary... <FontAwesomeIcon className='text-white' icon={faListUl} beatFade></FontAwesomeIcon></button>
+                                    </td>
+
+                                }
+                                {
+                                    (appointment.status==="pending" || appointment.status==="accepted" || appointment.status==="ongoing") &&
                                         <td className="text-lg text-center text-white font-semibold px-6 py-4 whitespace-nowrap">
                                             <span className='rounded-full text-red-700 py-3 px-4'>Can't Delete</span>
                                         </td>

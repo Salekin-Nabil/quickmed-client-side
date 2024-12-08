@@ -1,3 +1,3 @@
-const patientRecordAddress = '0x6B9fbE135F09fD79cFf7a50a0Ff9Af8ba5292acb';
+const patientRecordAddress = '0x15cD6e9A2918D36cb1caCcac0C3CB89f53A9F286';
 
 export default patientRecordAddress;

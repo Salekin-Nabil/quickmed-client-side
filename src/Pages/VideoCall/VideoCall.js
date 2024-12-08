@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import auth from "../../firebase.init";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useParams, useNavigate } from "react-router-dom";
+import Web3 from 'web3';
+import paymentEscrowABI from '../Dashboard/SmartContracts/ABI/paymentEscrowABI';
+import paymentEscrowAddress from '../Dashboard/SmartContracts/ContractAddress/paymentEscrowAddress';
+import toast, { Toaster } from "react-hot-toast";
 
 const VideoCall = () => {
   const [user] = useAuthState(auth);
@@ -25,6 +29,24 @@ const VideoCall = () => {
 
   const [messages, setMessages] = useState([]);
   const recognitionRef = useRef(null);
+
+  const [web3, setWeb3] = useState(null);
+  const [paymentEscrow, setPaymentEscrow] = useState(null);
+
+  useEffect(() => {
+    if (typeof window.ethereum !== 'undefined') {
+      const web3Instance = new Web3(window.ethereum);
+      setWeb3(web3Instance);
+
+      window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      const contractInstance = new web3Instance.eth.Contract(paymentEscrowABI, paymentEscrowAddress);
+      setPaymentEscrow(contractInstance);
+      console.log('**** Web3 initialized and contract loaded:', web3Instance, contractInstance);
+    } else {
+      console.error('MetaMask not detected. Please install MetaMask!');
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -269,8 +291,41 @@ const VideoCall = () => {
     endCall();
   };
 
-  const endCall = () => {
+  const endCall = async () => {
     stopSpeechRecognition();
+
+    fetch(`https://quickmed-server-side.onrender.com/bookings/${appointmentID}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        'authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (!web3 || !paymentEscrow) {
+          console.error('Web3 or contract is not initialized');
+          navigate("/");
+          return;
+      }
+      
+      // Fetch accounts
+      web3.eth.getAccounts()
+          .then((accounts) => {
+              const acc = accounts[0];
+      
+              // Call the releasePayment function
+              return paymentEscrow.methods.releasePayment(result.transactionId)
+                  .send({ from: acc });
+          })
+          .then((transaction) => {
+              console.log('Transaction successful:', transaction);
+              toast.success("Deposit Released for Withdrawal");
+          })
+          .catch((err) => {
+              console.error('Error during transaction:', err);
+          });
+      });
 
     const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
     fetch(url, {
@@ -505,6 +560,7 @@ const VideoCall = () => {
         </div>
       ))}
     </div>
+    <Toaster/>
   </div>
 );
 
