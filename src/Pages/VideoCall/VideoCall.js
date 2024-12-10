@@ -42,7 +42,6 @@ const VideoCall = () => {
 
       const contractInstance = new web3Instance.eth.Contract(paymentEscrowABI, paymentEscrowAddress);
       setPaymentEscrow(contractInstance);
-      console.log('**** Web3 initialized and contract loaded:', web3Instance, contractInstance);
     } else {
       console.error('MetaMask not detected. Please install MetaMask!');
     }
@@ -74,26 +73,20 @@ const VideoCall = () => {
     ws.current = new WebSocket("wss://quick-med.fly.dev/ws/call");
 
     ws.current.onopen = () => {
-      console.log("WebSocket connection opened");
       ws.current.send(
         JSON.stringify({
           type: "init",
           id: connectionId,
           sessionId: sessionId,
+          appointmentId: appointmentID 
         })
       );
-      console.log("Sent init message:", {
-        type: "init",
-        id: connectionId,
-        sessionId: sessionId,
-      });
 
       setupPeerConnection();
     };
 
     ws.current.onmessage = async (event) => {
       const data = JSON.parse(event.data);
-      console.log("Received message:", data);
 
       switch (data.type) {
         case "offer":
@@ -127,7 +120,7 @@ const VideoCall = () => {
     return () => {
       endCall();
     };
-  }, [connectionId, sessionId]);
+  }, [connectionId, sessionId, appointmentID]);
 
   const setupPeerConnection = () => {
     const pc = new RTCPeerConnection({
@@ -141,7 +134,6 @@ const VideoCall = () => {
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then(async (stream) => {
-        console.log("Local stream obtained");
         localStream.current = stream;
         localVideoRef.current.srcObject = stream;
         stream.getTracks().forEach((track) => {
@@ -150,7 +142,6 @@ const VideoCall = () => {
 
         if (isInitiator) {
           try {
-            console.log("Creating offer");
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             ws.current.send(
@@ -161,7 +152,6 @@ const VideoCall = () => {
                 sessionId: sessionId,
               })
             );
-            console.log("Sent offer:", pc.localDescription);
           } catch (err) {
             console.error("Error creating offer:", err);
           }
@@ -174,7 +164,6 @@ const VideoCall = () => {
 
     pc.onicecandidate = (event) => {
       if (event.candidate && ws.current) {
-        console.log("Sending ICE candidate:", event.candidate);
         ws.current.send(
           JSON.stringify({
             type: "candidate",
@@ -187,20 +176,18 @@ const VideoCall = () => {
     };
 
     pc.ontrack = (event) => {
-      console.log("Remote track received");
       if (remoteVideoRef.current.srcObject !== event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
 
     pc.oniceconnectionstatechange = () => {
-      console.log("ICE connection state changed to", pc.iceConnectionState);
+      console.log("ICE connection state:", pc.iceConnectionState);
     };
 
     if (!isInitiator) {
       pc.onnegotiationneeded = async () => {
         try {
-          console.log("Negotiation needed");
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.current.send(
@@ -211,10 +198,6 @@ const VideoCall = () => {
               sessionId: sessionId,
             })
           );
-          console.log(
-            "Sent offer after negotiation needed:",
-            pc.localDescription
-          );
         } catch (err) {
           console.error("Error during negotiation needed:", err);
         }
@@ -224,7 +207,6 @@ const VideoCall = () => {
 
   const handleOfferMsg = async (data) => {
     try {
-      console.log("Received offer:", data);
       const desc = new RTCSessionDescription(data.sdp);
       await peerConnection.current.setRemoteDescription(desc);
 
@@ -238,7 +220,6 @@ const VideoCall = () => {
           sessionId: sessionId,
         })
       );
-      console.log("Sent answer:", peerConnection.current.localDescription);
 
       while (iceCandidatesQueue.current.length) {
         const candidate = iceCandidatesQueue.current.shift();
@@ -251,7 +232,6 @@ const VideoCall = () => {
 
   const handleAnswerMsg = async (data) => {
     try {
-      console.log("Received answer:", data);
       const desc = new RTCSessionDescription(data.sdp);
       await peerConnection.current.setRemoteDescription(desc);
 
@@ -266,7 +246,6 @@ const VideoCall = () => {
 
   const handleNewICECandidateMsg = async (data) => {
     try {
-      console.log("Received ICE candidate:", data);
       const candidate = new RTCIceCandidate(data.candidate);
       if (peerConnection.current.remoteDescription) {
         await peerConnection.current.addIceCandidate(candidate);
@@ -279,7 +258,6 @@ const VideoCall = () => {
   };
 
   const handleTranscriptionMsg = (data) => {
-    console.log("Received transcription:", data.text);
     setMessages((prevMessages) => [
       ...prevMessages,
       { sender: "remote", text: data.text },
@@ -287,7 +265,6 @@ const VideoCall = () => {
   };
 
   const handleHangupMsg = async () => {
-    console.log("Received hangup message");
     endCall();
   };
 
@@ -301,31 +278,28 @@ const VideoCall = () => {
         'authorization': `Bearer ${localStorage.getItem('accessToken')}`
       },
     })
-      .then((res) => res.json())
-      .then((result) => {
-        if (!web3 || !paymentEscrow) {
-          console.error('Web3 or contract is not initialized');
-          navigate("/");
-          return;
+    .then((res) => res.json())
+    .then((result) => {
+      if (!web3 || !paymentEscrow) {
+        console.error('Web3 or contract is not initialized');
+        navigate("/");
+        return;
       }
-      
-      // Fetch accounts
+
       web3.eth.getAccounts()
-          .then((accounts) => {
-              const acc = accounts[0];
-      
-              // Call the releasePayment function
-              return paymentEscrow.methods.releasePayment(result.transactionId)
-                  .send({ from: acc });
-          })
-          .then((transaction) => {
-              console.log('Transaction successful:', transaction);
-              toast.success("Deposit Released for Withdrawal");
-          })
-          .catch((err) => {
-              console.error('Error during transaction:', err);
-          });
-      });
+        .then((accounts) => {
+          const acc = accounts[0];
+          return paymentEscrow.methods.releasePayment(result.transactionId)
+            .send({ from: acc });
+        })
+        .then((transaction) => {
+          console.log('Transaction successful:', transaction);
+          toast.success("Deposit Released for Withdrawal");
+        })
+        .catch((err) => {
+          console.error('Error during transaction:', err);
+        });
+    });
 
     const url = `https://quickmed-server-side.onrender.com/bookings/calls/ended/${appointmentID}`;
     fetch(url, {
@@ -334,10 +308,10 @@ const VideoCall = () => {
         "content-type": "application/json",
       },
     })
-      .then((res) => res.json())
-      .then((result) => {
-        console.log(result);
-      });
+    .then((res) => res.json())
+    .then((result) => {
+      console.log(result);
+    });
 
     if (localStream.current) {
       localStream.current.getTracks().forEach((track) => track.stop());
@@ -376,7 +350,6 @@ const VideoCall = () => {
     }
 
     setMessages([]);
-
     navigate("/");
   };
 
@@ -494,76 +467,75 @@ const VideoCall = () => {
   }, [isAudioEnabled]);
 
   return (
-  <div className="flex flex-row h-[80vh] max-h-[80vh]">
-    <div className="relative flex items-center justify-center flex-1 bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
-      <video
-        ref={remoteVideoRef}
-        autoPlay
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover shadow-lg"
-      />
-
-      <div className="absolute bottom-6 right-6 w-32 h-24 md:w-40 md:h-28 lg:w-48 lg:h-32 border-2 border-gray-700 shadow-lg rounded-lg overflow-hidden">
+    <div className="flex flex-row h-[80vh] max-h-[80vh]">
+      <div className="relative flex items-center justify-center flex-1 bg-black pt-16 pb-16 md:pb-20 overflow-hidden">
         <video
-          ref={localVideoRef}
+          ref={remoteVideoRef}
           autoPlay
           playsInline
-          muted
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover shadow-lg"
         />
-      </div>
 
-      <div className="absolute bottom-6 flex gap-4 justify-center w-full">
-        <button
-          className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
-          onClick={toggleVideo}
-        >
-          <i
-            className={`fas ${
-              isVideoEnabled ? "fa-video" : "fa-video-slash"
-            } text-white`}
-          ></i>
-        </button>
-        <button
-          className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
-          onClick={toggleAudio}
-        >
-          <i
-            className={`fas ${
-              isAudioEnabled ? "fa-microphone" : "fa-microphone-slash"
-            } text-white`}
-          ></i>
-        </button>
-        <button
-          className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition"
-          onClick={endCall}
-        >
-          <i className="fas fa-phone-slash text-white"></i>
-        </button>
-      </div>
-    </div>
-    <div
-      ref={messageContainerRef}
-      className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto"
-    >
-      {messages.map((message, index) => (
-        <div
-          key={index}
-          className="flex flex-row bg-gray-700 m-2 p-2 rounded"
-        >
-          <div
-            className={`${
-              message.sender === "local" ? "bg-blue-500" : "bg-green-500"
-            } w-[4px] max-w-[4px] min-w-[4px]`}
-          ></div>
-          <div className="text-xs px-4 py-1 font-semibold">{message.text}</div>
+        <div className="absolute bottom-6 right-6 w-32 h-24 md:w-40 md:h-28 lg:w-48 lg:h-32 border-2 border-gray-700 shadow-lg rounded-lg overflow-hidden">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
         </div>
-      ))}
-    </div>
-    <Toaster/>
-  </div>
-);
 
+        <div className="absolute bottom-6 flex gap-4 justify-center w-full">
+          <button
+            className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+            onClick={toggleVideo}
+          >
+            <i
+              className={`fas ${
+                isVideoEnabled ? "fa-video" : "fa-video-slash"
+              } text-white`}
+            ></i>
+          </button>
+          <button
+            className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition"
+            onClick={toggleAudio}
+          >
+            <i
+              className={`fas ${
+                isAudioEnabled ? "fa-microphone" : "fa-microphone-slash"
+              } text-white`}
+            ></i>
+          </button>
+          <button
+            className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition"
+            onClick={endCall}
+          >
+            <i className="fas fa-phone-slash text-white"></i>
+          </button>
+        </div>
+      </div>
+      <div
+        ref={messageContainerRef}
+        className="flex flex-col w-80 bg-gray-900 text-white overflow-y-auto"
+      >
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className="flex flex-row bg-gray-700 m-2 p-2 rounded"
+          >
+            <div
+              className={`${
+                message.sender === "local" ? "bg-blue-500" : "bg-green-500"
+              } w-[4px] max-w-[4px] min-w-[4px]`}
+            ></div>
+            <div className="text-xs px-4 py-1 font-semibold">{message.text}</div>
+          </div>
+        ))}
+      </div>
+      <Toaster/>
+    </div>
+  );
 };
 
 export default VideoCall;
