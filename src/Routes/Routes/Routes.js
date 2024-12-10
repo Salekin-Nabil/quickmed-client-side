@@ -8,6 +8,7 @@ import Login from "../../Pages/Login/Login";
 import Signup from "../../Pages/Login/Signup";
 import RequireAuth from "../../Pages/Login/RequireAuth";
 import MyAppointment from "../../Pages/Dashboard/MyAppointment/MyAppointment";
+import Summary from "../../Pages/Dashboard/MyAppointment/Summary";
 import Dashboard from "../../Pages/Dashboard/Dashboard/Dashboard";
 import MyReviews from "../../Pages/Dashboard/MyReviews/MyReviews";
 import MyProfile from "../../Pages/Dashboard/MyProfile/MyProfile";
@@ -72,6 +73,10 @@ const router = createBrowserRouter([
                     {
                         path: '/dashboard',
                         element: <MyAppointment></MyAppointment>
+                    },
+                    {
+                        path: '/dashboard/summary/:id',
+                        element: <Summary></Summary>
                     },
                     {
                         path: '/dashboard/my_reviews',

@@ -238,7 +238,7 @@ const MyAppointment = () => {
                                 {
                                     appointment.status==="completed" &&
                                     <td className="text-center text-white px-6 py-4 whitespace-nowrap">
-                                    <button onClick={()=>navigate(`#`)} className='rounded-md bg-[#528b1c] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black] text-bold'>Consultation Summary... <FontAwesomeIcon className='text-white' icon={faListUl} beatFade></FontAwesomeIcon></button>
+                                    <button onClick={()=>navigate(`/dashboard/summary/${appointment._id}`)} className='rounded-md bg-[#528b1c] hover:bg-gradient-to-br hover:from-accent to-secondary text-white py-1 px-5 md:px-24 border-0 shadow shadow-[black] text-bold'>Consultation Summary... <FontAwesomeIcon className='text-white' icon={faListUl} beatFade></FontAwesomeIcon></button>
                                     </td>
 
                                 }
