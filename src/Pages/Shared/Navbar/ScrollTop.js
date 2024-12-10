@@ -38,7 +38,7 @@ const ScrollTop= () => {
             onClick={backToTop}
             className={` ${
               showButton ? `inline-block` : `hidden`
-            } fixed bottom-[40px] right-[140px] p-3 bg-[#78cec0] text-white font-medium text-xs leading-tight uppercase rounded-full shadow-md hover:bg-[#44794b] hover:shadow-lg focus:bg-cyan-500 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-cyan-600 active:shadow-lg transition duration-150 ease-in-out`}
+            } fixed bottom-[40px] right-[140px] p-3 bg-[#68bb73] text-white font-medium text-xs leading-tight uppercase rounded-full shadow-md hover:bg-[#348846] hover:shadow-lg focus:bg-cyan-500 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-cyan-600 active:shadow-lg transition duration-150 ease-in-out`}
           >
             <svg
               aria-hidden="true"

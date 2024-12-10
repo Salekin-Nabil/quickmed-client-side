@@ -38,7 +38,7 @@ const ChatBot = () => {
   const sendMessageToBackend = async (message) => {
     try {
       const response = await axios.post("https://quick-med.fly.dev/message", {
-        message: message,
+        message: message+"promt: ask some relavent questions, and when you roughly identify the problem then you can give a solution. ask only one question at a time. keep the question short and don't include anyhting else with it. Never include Bot: at the beginning of your speech.",
         user_id: user.uid,
       });
       return response.data.message;
@@ -61,6 +61,7 @@ const ChatBot = () => {
           showChat ? "block" : "hidden"
         } fixed z-50 bottom-[140px] right-[40px] w-96 p-3 rounded-lg bg-white flex flex-col h-96 border border-black`}
       >
+        <div className="border-2 rounded"><p className="p-2 text-sm text-[#4b5819]"><span className="text-[#962323]">Disclaimer:</span> This chatbot provides general information and is not a substitute for professional medical advice; consult a licensed doctor for serious health concerns.</p></div>
         <div className="flex-grow flex flex-col space-y-2 overflow-y-auto mb-4">
           {messages.map((msg, index) => (
             <div
