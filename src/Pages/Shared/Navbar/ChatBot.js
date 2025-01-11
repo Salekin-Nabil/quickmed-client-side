@@ -37,7 +37,7 @@ const ChatBot = () => {
 
   const sendMessageToBackend = async (message) => {
     try {
-      const response = await axios.post("https://quick-med.fly.dev/message", {
+      const response = await axios.post("https://quick-med.onrender.com/message", {
         message: message+"promt: ask some relavent questions, and when you roughly identify the problem then you can give a solution. ask only one question at a time. keep the question short and don't include anyhting else with it. Never include Bot: at the beginning of your speech.",
         user_id: user.uid,
       });

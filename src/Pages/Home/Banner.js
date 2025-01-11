@@ -11,7 +11,7 @@ const Banner = () => {
 
     const sendMessageToBackend = async (message) => {
         try {
-          const response = await axios.post("https://quick-med.fly.dev/message", {
+          const response = await axios.post("https://quick-med.onrender.com/message", {
             message: message,
             user_id: user.uid,
           });

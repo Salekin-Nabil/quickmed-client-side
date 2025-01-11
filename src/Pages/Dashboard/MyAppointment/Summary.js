@@ -16,7 +16,7 @@ const Summary = () => {
     const {id} = useParams();
     const [summary, setSummary] = useState({});
 
-    const url = `https://quick-med.fly.dev/appointments/${id}/conversation`;
+    const url = `https://quick-med.onrender.com/appointments/${id}/conversation`;
 
     useEffect(() => {
         if(user) {
