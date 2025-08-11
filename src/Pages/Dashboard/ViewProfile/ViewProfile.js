@@ -69,7 +69,7 @@ const ViewProfile = () => {
     return (
         <div>
             <Helmet>
-                <title>QuickMed-Update Profile</title>
+                <title>QuickMed-View Profile</title>
             </Helmet>
             <div className='flex justify-between mb-8 font-bold shadow-lg shadow-[gray] hover:shadow-xl hover:shadow-[gray] mx-[1vw] py-[1vw] rounded-lg'>
              <h1 className='ml-8 text-transparent bg-clip-text bg-gradient-to-br from-accent to-secondary text-5xl '>View <span className='text-[#20242c]'>Profile</span></h1>
